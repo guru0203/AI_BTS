@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Lens — How AI Thinks</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@300;400;600&family=Syne:wght@400;600;700;800&display=swap');
+
+/* ── DESIGN TOKENS ── */
+:root{
+  --bg:        #070511;
+  --bg2:       #0d0b1c;
+  --surface:   #131028;
+  --surface2:  #1c1938;
+  --border:    #29244a;
+  --border2:   #3a3464;
+  --cyan:      #67e8f9;
+  --violet:    #c084fc;
+  --amber:     #fde047;
+  --emerald:   #6ee7b7;
+  --rose:      #fca5a5;
+  --orange:    #fdba74;
+  --pink:      #f9a8d4;
+  --text:      #f5f0ff;
+  --text2:     #c4b8e8;
+  --muted:     #6458a0;
+  --glow-c:    rgba(103,232,249,.18);
+  --glow-v:    rgba(192,132,252,.18);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);min-height:100vh;font-family:'Nunito',sans-serif;padding-bottom:90px}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(103,232,249,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(192,132,252,.03) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0}
+
+/* HERO */
+.hero{position:relative;z-index:1;padding:38px 24px 26px;text-align:center}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 0%,rgba(103,232,249,.12),transparent 60%),radial-gradient(ellipse at 70% 0%,rgba(192,132,252,.14),transparent 60%);pointer-events:none}
+.hero-emoji{font-size:2.8rem;display:block;margin-bottom:10px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.hero h1{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:900;letter-spacing:-2px;line-height:1;margin-bottom:6px}
+.hero h1 .g{background:linear-gradient(120deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:.88rem;color:var(--text2);font-weight:600;line-height:1.5}
+
+/* MODE TOGGLE */
+.mode-wrap{display:flex;justify-content:center;padding:12px 16px 4px;position:relative;z-index:1}
+.mode-toggle{display:inline-flex;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:5px;gap:4px;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.mbtn{font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;padding:10px 22px;border-radius:12px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .25s}
+.mbtn:hover{color:var(--text2)}
+.mbtn.story.active{background:linear-gradient(135deg,#fb923c,#f472b6);color:#fff;box-shadow:0 3px 20px rgba(244,114,182,.4),0 0 0 1px rgba(251,146,60,.3)}
+.mbtn.tech.active{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#0a0818;font-weight:900;box-shadow:0 3px 20px rgba(192,132,252,.4),0 0 0 1px rgba(103,232,249,.3)}
+.mode-hint{text-align:center;font-size:.68rem;color:var(--muted);font-family:monospace;padding-bottom:6px;position:relative;z-index:1}
+
+/* CONTROLS */
+.ctrl{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 20px rgba(0,0,0,.4)}
+.inp-wrap{flex:1;min-width:200px;display:flex;gap:8px;align-items:center;background:var(--bg2);border:2px solid var(--border);border-radius:10px;padding:6px 12px;transition:border-color .2s}
+.inp-wrap:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.08)}
+.inp-wrap input{flex:1;background:transparent;border:none;color:var(--text);font-size:.88rem;outline:none;font-weight:600;font-family:'Nunito',sans-serif}
+.inp-wrap input::placeholder{color:var(--muted)}
+.run-btn{background:linear-gradient(135deg,var(--cyan),var(--violet));border:none;color:#0d0b14;padding:10px 20px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;transition:all .2s;white-space:nowrap;box-shadow:0 2px 12px rgba(34,211,238,.25)}
+.run-btn:hover{opacity:.88;box-shadow:0 4px 20px rgba(34,211,238,.4)}
+.run-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.prog-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
+.prog-lbl{font-size:.65rem;color:var(--muted);white-space:nowrap;font-family:monospace}
+.prog-bg{width:110px;height:4px;background:var(--border);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));width:0%;transition:width .4s;border-radius:4px}
+
+/* CONTAINER */
+.container{max-width:780px;margin:0 auto;padding:20px 14px;position:relative;z-index:1}
+
+/* mode visibility */
+body[data-mode="story"] .tech-view{display:none!important}
+body[data-mode="tech"]  .story-view{display:none!important}
+
+/* CONNECTOR */
+.conn{display:flex;flex-direction:column;align-items:center;height:20px;justify-content:center;opacity:.5;margin-bottom:6px}
+.conn::before{content:'';width:2px;height:12px;background:linear-gradient(var(--border),var(--violet))}
+.conn::after{content:'▼';color:var(--violet);font-size:.55rem;margin-top:-2px}
+
+/* STAGE CARD */
+.stage-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;opacity:.3;transition:all .3s;margin-bottom:6px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.stage-card.active{opacity:1;border:2px solid var(--cyan);box-shadow:0 0 0 3px rgba(103,232,249,.08),0 0 32px rgba(103,232,249,.18),0 8px 32px rgba(0,0,0,.4)}
+.stage-card.done{opacity:1;border-color:var(--emerald);box-shadow:0 0 16px rgba(52,211,153,.1)}
+.stage-card.active .s-emoji{background:linear-gradient(135deg,#fb923c,#e879f9)!important;border-color:transparent!important;box-shadow:0 0 14px rgba(232,121,249,.4)}
+.stage-card.done .s-emoji{background:linear-gradient(135deg,var(--emerald),#059669)!important;border-color:transparent!important}
+.stage-card.active .s-badge{background:var(--orange)}
+.stage-card.done .s-badge{background:var(--emerald)}
+.s-header{display:flex;align-items:center;gap:13px;padding:13px 18px;cursor:pointer;transition:background .2s;user-select:none}
+.s-header:hover{background:var(--surface2)}
+.s-emoji-wrap{position:relative;flex-shrink:0}
+.s-emoji{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:2px solid var(--border);border-radius:13px;font-size:1.5rem;transition:all .3s}
+.s-badge{position:absolute;top:-5px;right:-5px;width:17px;height:17px;background:var(--muted);color:#fff;border-radius:50%;font-size:.55rem;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.s-info{flex:1;min-width:0}
+.s-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;line-height:1.2;color:var(--text)}
+.s-tagline{font-size:.7rem;color:var(--text2);opacity:.7;margin-top:3px}
+.s-status{font-size:.62rem;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;color:var(--muted);font-family:monospace;transition:color .3s}
+.stage-card.active .s-status{color:var(--cyan)}
+.stage-card.done .s-status{color:var(--emerald)}
+.s-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.4,0,.2,1)}
+.s-body.open{max-height:2000px}
+.s-inner{padding:0 18px 20px}
+
+/* STORY pieces */
+.analogy{background:rgba(251,146,60,.07);border:2px solid rgba(251,146,60,.22);border-radius:13px;padding:13px 15px;margin-bottom:12px;display:flex;gap:11px;align-items:flex-start}
+.analogy-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px}
+.analogy-text{font-size:.84rem;line-height:1.75;font-weight:600}
+.analogy-text strong{color:var(--orange)}
+.analogy-text em{color:var(--violet);font-style:normal;font-weight:800}
+.myth{display:flex;gap:10px;background:rgba(251,113,133,.06);border:1px solid rgba(251,113,133,.22);border-radius:11px;padding:11px 14px;margin-bottom:11px}
+.myth-wrong{font-size:.73rem;font-weight:700;color:var(--rose);text-decoration:line-through;margin-bottom:3px}
+.myth-right{font-size:.79rem;font-weight:700;line-height:1.6;opacity:.85}
+.fun-fact{display:flex;gap:9px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:10px 13px;margin-top:10px;font-size:.77rem;font-weight:600;line-height:1.6;opacity:.85}
+.fun-fact strong{color:var(--violet)}
+.viz-box{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:13px;margin-bottom:11px}
+.viz-title{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--violet);margin-bottom:9px}
+
+/* PREVIEW BADGE — unmissable banner */
+.preview-badge{
+  position:relative;overflow:hidden;
+  display:flex;align-items:flex-start;gap:14px;
+  background:linear-gradient(135deg,rgba(253,224,71,.11) 0%,rgba(249,168,212,.08) 50%,rgba(192,132,252,.1) 100%);
+  border:0;
+  border-radius:14px;
+  padding:15px 18px;
+  margin-bottom:16px;
+  outline:2px solid var(--amber);
+  outline-offset:-2px;
+  box-shadow:
+    0 0 0 1px rgba(253,224,71,.12),
+    0 0 28px rgba(253,224,71,.18),
+    0 0 60px rgba(253,224,71,.06),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -1px 0 rgba(0,0,0,.2);
+}
+.preview-badge::before{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.11) 50%,transparent);
+  animation:shimmer 2.2s ease-in-out infinite;
+  pointer-events:none;
+}
+.preview-badge::after{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 40%);
+  pointer-events:none;
+}
+@keyframes shimmer{0%{left:-100%}100%{left:150%}}
+.pb-icon{
+  font-size:1.6rem;flex-shrink:0;margin-top:1px;
+  filter:drop-shadow(0 0 8px rgba(253,224,71,.8)) drop-shadow(0 0 16px rgba(253,224,71,.4));
+  animation:glow-pulse 2s ease-in-out infinite;
+}
+@keyframes glow-pulse{0%,100%{filter:drop-shadow(0 0 6px rgba(253,224,71,.7))}50%{filter:drop-shadow(0 0 14px rgba(253,224,71,1)) drop-shadow(0 0 28px rgba(253,224,71,.5))}}
+.pb-body{display:flex;flex-direction:column;gap:4px}
+.pb-label{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(253,224,71,.18);border:1px solid rgba(253,224,71,.4);
+  border-radius:20px;padding:2px 10px;
+  font-size:.62rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--amber);width:fit-content;margin-bottom:2px;
+}
+.pb-text{font-size:.85rem;font-weight:800;color:var(--amber);line-height:1.5;letter-spacing:.1px}
+.pb-subtext{font-size:.73rem;font-weight:600;color:rgba(253,224,71,.65);line-height:1.5}
+
+/* chips */
+.tok-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tok-chip{padding:6px 12px;border-radius:8px;font-size:.81rem;font-weight:700;background:rgba(251,146,60,.1);border:2px solid rgba(251,146,60,.4);color:var(--orange);opacity:0;animation:popUp .3s forwards}
+@keyframes popUp{from{opacity:0;transform:scale(.7) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.tok-badge{font-size:.53rem;background:var(--orange);color:#0d0b14;border-radius:3px;padding:1px 5px;margin-left:4px;font-weight:900}
+
+/* sim bars */
+.sim-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;opacity:0;animation:slideR .3s forwards}
+@keyframes slideR{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.sim-word{font-weight:800;font-size:.8rem;width:90px;flex-shrink:0;color:var(--text)}
+.sim-bar-bg{flex:1;height:18px;background:var(--border);border-radius:5px;overflow:hidden}
+.sim-bar{height:100%;border-radius:5px;transition:width .8s ease;display:flex;align-items:center;padding-left:5px;width:0%}
+.sim-bar span{font-size:.58rem;color:rgba(255,255,255,.9);font-weight:800;white-space:nowrap}
+.sim-pct{font-size:.7rem;font-weight:800;width:34px;text-align:right;color:var(--text2)}
+
+/* attn */
+.attn-tok{padding:5px 11px;border-radius:7px;font-size:.79rem;font-weight:700;border:2px solid;cursor:pointer;transition:all .2s;opacity:0;animation:popUp .3s forwards;display:inline-block;margin:3px}
+.attn-tok:hover{transform:scale(1.08)}
+.attn-exp{font-size:.79rem;line-height:1.7;padding:9px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-weight:600;margin-top:8px;min-height:32px;transition:all .3s;color:var(--text2)}
+
+/* layers */
+.lt-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;opacity:0;animation:slideR .3s forwards}
+.lt-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.lt-bar-bg{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;margin:4px 0}
+.lt-bar{height:100%;border-radius:4px;transition:width .8s ease;width:0%}
+.lt-desc{font-size:.65rem;opacity:.55;font-style:italic;color:var(--text2)}
+
+/* kv rows */
+.kv-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;opacity:0;animation:popUp .3s forwards;margin-bottom:5px}
+
+/* output */
+.output-area{background:var(--bg2);border:2px solid var(--border);border-radius:11px;padding:15px;min-height:70px;font-size:.93rem;line-height:1.85;color:var(--text)}
+.output-area.story-out{font-family:'Georgia',serif}
+.output-area.tech-out{font-family:monospace;font-size:.82rem}
+.cursor{display:inline-block;width:2px;height:1.1em;background:var(--cyan);animation:blink .8s infinite;vertical-align:text-bottom;margin-left:2px;border-radius:1px}
+@keyframes blink{50%{opacity:0}}
+
+/* tech pieces */
+.t-section{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 15px;margin-bottom:10px}
+.t-sec-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--cyan);margin-bottom:7px}
+.deriv-row{display:flex;margin-bottom:2px}
+.drv-lbl{font-size:.6rem;color:var(--muted);width:110px;flex-shrink:0;padding:7px 9px;display:flex;align-items:center;text-transform:uppercase;letter-spacing:.7px;border-right:2px solid var(--border)}
+.drv-val{flex:1;padding:7px 11px;background:var(--bg2);border:1px solid var(--border);border-left:1px solid var(--border);font-size:.7rem;line-height:1.6;color:var(--text);font-family:monospace}
+.drv-val.hi{border-left:3px solid var(--cyan);background:rgba(34,211,238,.04)}
+.drv-val.res{border-left:3px solid var(--emerald);background:rgba(52,211,153,.04);color:var(--emerald);font-weight:600}
+.drv-arrow{text-align:center;color:var(--muted);font-size:.65rem;padding:2px 0}
+.dv{display:inline-block;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);color:var(--cyan);padding:1px 5px;border-radius:3px;font-size:.63rem;margin:0 2px}
+.dv.g{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.22);color:var(--emerald)}
+.dv.y{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.22);color:var(--amber)}
+.dv.o{background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.22);color:var(--orange)}
+
+/* heatmap */
+.emb-grid{display:grid;gap:2px;overflow-x:auto}
+.emb-cell{height:14px;border-radius:2px;cursor:default;transition:transform .15s}
+.emb-cell:hover{transform:scaleY(1.8);z-index:1}
+
+/* attn matrix */
+.attn-matrix{display:inline-grid;gap:2px}
+.attn-cell{width:30px;height:30px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.5rem;cursor:default;transition:transform .15s}
+.attn-cell:hover{transform:scale(1.3);z-index:2}
+
+/* layers chips */
+.layer-chips{display:flex;gap:4px;flex-wrap:wrap}
+.lchip{background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.25);border-radius:5px;padding:4px 9px;font-size:.65rem;color:var(--cyan);opacity:0;animation:popUp .3s forwards}
+
+/* softmax bars */
+.sm-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.sm-word{width:110px;font-size:.74rem;font-weight:600;flex-shrink:0;color:var(--text)}
+.sm-logit{width:48px;text-align:right;font-size:.66rem;color:var(--orange)}
+.sm-prob{width:44px;text-align:right;font-size:.66rem;color:var(--emerald);font-weight:700}
+.sm-bar-bg{flex:1;height:13px;background:var(--border);border-radius:3px;overflow:hidden}
+.sm-bar{height:100%;border-radius:3px;width:0%;transition:width .8s ease}
+.sm-sel{font-size:.58rem;color:var(--amber);flex-shrink:0}
+
+/* ctx blocks */
+.ctx-block{height:24px;border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:.58rem;white-space:nowrap;opacity:0;animation:popUp .3s forwards}
+
+/* tok ticker */
+.tok-ticker{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}
+.ttick{display:inline-flex;flex-direction:column;align-items:center;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.22);border-radius:5px;padding:3px 6px;font-size:.75rem;color:var(--emerald);opacity:0;animation:popUp .25s forwards}
+.ttick span{font-size:.5rem;color:var(--amber);margin-top:1px}
+
+/* receipt */
+.receipt{background:var(--bg2);border:2px dashed var(--border2);border-radius:11px;padding:12px;font-family:'Courier New',monospace;font-size:.76rem;margin-top:10px}
+.rr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border);color:var(--text2)}
+.rr:last-child{border-bottom:none;font-weight:900;color:var(--cyan);font-size:.86rem;margin-top:4px}
+.rr .rv{color:var(--text);font-weight:700}
+.rr:last-child .rv{color:var(--cyan)}
+
+/* stat cards */
+.stat-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.stat-card{flex:1;min-width:80px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;text-align:center;opacity:0;animation:popUp .4s forwards}
+.stat-card .sv{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--cyan)}
+.stat-card .sl{font-size:.6rem;opacity:.6;margin-top:2px;color:var(--text2)}
+
+/* econ */
+.econ-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;margin-bottom:12px}
+.econ-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.econ-card.hi{border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.04)}
+.econ-title{font-size:.62rem;color:var(--text2);opacity:.8;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;font-family:monospace}
+.econ-formula{font-size:.62rem;color:var(--muted);margin-bottom:5px;font-family:monospace}
+.econ-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--text)}
+.econ-val.g{color:var(--emerald)}
+
+/* model tabs */
+.model-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.mtab{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:5px;font-size:.62rem;cursor:pointer;transition:all .2s;font-family:monospace}
+.mtab:hover,.mtab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.07)}
+
+/* scale */
+.scale-sec{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-top:10px}
+.scale-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--amber);margin-bottom:9px}
+.scale-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-top:8px}
+.sc-mini{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 9px;text-align:center}
+.sc-val{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:var(--amber)}
+.sc-lbl{font-size:.58rem;color:var(--text2);opacity:.7;margin-top:2px}
+
+/* anatomy */
+.anat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.68rem;color:var(--text2)}
+.anat-lbl{width:110px;flex-shrink:0}
+.anat-bg{flex:1;height:14px;background:var(--border);border-radius:3px;overflow:hidden}
+.anat-fill{height:100%;border-radius:3px;transition:width .7s ease}
+.anat-val{width:46px;text-align:right;color:var(--text2)}
+
+/* HUD */
+#hud{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:2px solid var(--cyan);box-shadow:0 -4px 24px rgba(0,0,0,.5),0 -1px 0 rgba(34,211,238,.15);transform:translateY(100%);transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.hud-bar{display:flex;align-items:center;gap:16px;padding:9px 22px;cursor:pointer;flex-wrap:wrap}
+.hud-stat{display:flex;flex-direction:column}
+.hud-val{font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;line-height:1;color:var(--text)}
+.hud-val.g{color:var(--emerald)}
+.hud-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-top:2px}
+.hud-panel{display:none;padding:0 22px 18px}
+.hud-divider{height:1px;background:var(--border);margin-bottom:14px}
+
+/* kv table */
+.kv-table{width:100%;border-collapse:collapse;font-size:.68rem}
+.kv-table th{background:var(--bg2);color:var(--cyan);padding:5px 9px;text-align:left;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:.62rem;text-transform:uppercase;letter-spacing:.9px}
+.kv-table td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.03);font-family:monospace}
+</style>
+</head>
+<body data-mode="tech">
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-emoji">🧠</span>
+  <h1>Neural <span class="g">Lens</span></h1>
+  <p class="hero-sub">Type any message — see exactly how AI processes it across 9 stages</p>
+</div>
+
+<!-- MODE TOGGLE -->
+<div class="mode-wrap">
+  <div class="mode-toggle">
+    <button class="mbtn story" onclick="setMode('story')">📖 Story Mode</button>
+    <button class="mbtn tech active" onclick="setMode('tech')">⚙️ Deep Dive</button>
+  </div>
+</div>
+<p class="mode-hint" id="mhint">⚙️ Full derivations · Matrices · Step-by-step math</p>
+
+<!-- CONTROLS -->
+<div class="ctrl">
+  <div class="inp-wrap">
+    <span>💬</span>
+    <input id="userInput" type="text" value="What is machine learning?" placeholder="Type anything…" />
+  </div>
+  <button class="run-btn" id="runBtn" onclick="runPipeline()">▶ Run</button>
+  <div class="prog-wrap">
+    <span class="prog-lbl" id="progLbl">Ready</span>
+    <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
+  </div>
+</div>
+
+<div class="container" id="pipeline"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-bar" onclick="toggleHUD()">
+    <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:.75rem;color:#00c8f8;flex-shrink:0">💰 Token Economy</span>
+    <div style="display:flex;gap:18px;flex:1;flex-wrap:wrap">
+      <div class="hud-stat"><span class="hud-val" id="h-in">0</span><span class="hud-lbl">input tok</span></div>
+      <div class="hud-stat"><span class="hud-val" id="h-out">0</span><span class="hud-lbl">output tok</span></div>
+      <div class="hud-stat"><span class="hud-val g" id="h-cost">$0.000000</span><span class="hud-lbl">cost</span></div>
+      <div class="hud-stat"><span class="hud-val" id="h-tps">—</span><span class="hud-lbl">tok/s</span></div>
+    </div>
+    <span style="font-size:.62rem;color:#3d5472;margin-left:auto" id="hud-hint">▲ expand</span>
+  </div>
+  <div class="hud-panel" id="hud-panel">
+    <div class="hud-divider"></div>
+    <div class="model-tabs" id="h-mtabs"></div>
+    <div class="econ-grid" id="h-econ"></div>
+    <div class="scale-sec">
+      <div class="scale-title">📈 Scale Projector</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:.68rem;opacity:.6">Daily calls:</span>
+        <input type="range" min="0" max="5" value="2" oninput="updateScale()" id="scaleSlider" style="flex:1;min-width:100px;accent-color:#00c8f8">
+        <span style="font-size:.73rem;color:#00c8f8;font-weight:700;width:75px;font-family:monospace" id="scaleLbl">10K/day</span>
+      </div>
+      <div class="scale-cards" id="scale-cards"></div>
+    </div>
+    <div style="background:#080e1a;border:1px solid #1c2d4a;border-radius:9px;padding:12px 14px;margin-top:10px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:#8b5cf6;margin-bottom:9px">🔬 Token Anatomy</div>
+      <div id="h-anatomy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══ CONSTANTS ═══ */
+const MODELS=[
+  {name:'Claude Sonnet 4',inP:3.0,outP:15.0,ctx:200000},
+  {name:'Claude Haiku 4',inP:0.80,outP:4.0,ctx:200000},
+  {name:'GPT-4o',inP:2.5,outP:10.0,ctx:128000},
+  {name:'GPT-4o mini',inP:0.15,outP:0.60,ctx:128000},
+  {name:'Gemini 1.5 Pro',inP:1.25,outP:5.0,ctx:1000000},
+];
+const SCALE_VALS=[100,1000,10000,100000,1000000,10000000];
+const SCALE_LABS=['100/day','1K/day','10K/day','100K/day','1M/day','10M/day'];
+const COLORS=['#ff9a5c','#b39dff','#4db6ac','#42a5f5','#f48fb1','#ffcc80','#80deea','#a5d6a7'];
+
+/* ── PRE-GENERATED DATA for S6 & S9 (no API needed) ── */
+const PRESET={
+  candidates:[
+    {word:'Machine learning',pct:42},
+    {word:'That is a great',pct:26},
+    {word:'At its core,',pct:17},
+    {word:'Simply put,',pct:10},
+    {word:'In essence,',pct:5},
+  ],
+  response:'Machine learning is a branch of artificial intelligence where systems learn from data to improve their performance without being explicitly programmed. Instead of following fixed rules, a machine learning model identifies patterns in examples and uses those patterns to make predictions or decisions on new, unseen data. It powers everything from recommendation engines and image recognition to language models like the one processing this very message.',
+  similar_words:['learning','intelligence','neural','model','algorithm'],
+};
+
+/* ═══ STATE ═══ */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let speed=900, selectedModel=0, hudOpen=false;
+const hudState={inTok:0,outTok:0,startTime:null};
+let currentMode='tech';
+
+/* ═══ UTILS ═══ */
+function tokenize(text){
+  return text.trim().split(/\s+/).filter(Boolean).slice(0,9).map((w,i)=>({
+    text:w,id:(1000+i*3741+w.charCodeAt(0)*17+w.length*83)%94000+1200
+  }));
+}
+function heatColor(v){return`rgb(${Math.floor(v*255)},${Math.floor(v*80)},${Math.floor((1-v)*220)})`}
+function setProgress(n,lbl){
+  document.getElementById('progFill').style.width=(n/9*100)+'%';
+  document.getElementById('progLbl').textContent=lbl||'Stage '+n+'/9';
+}
+function setMode(m){
+  currentMode=m;
+  document.body.setAttribute('data-mode',m);
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.mbtn.'+m).classList.add('active');
+  document.getElementById('mhint').textContent=m==='story'?'📖 Plain English · Real-world analogies · No jargon':'⚙️ Full derivations · Matrices · Step-by-step math';
+}
+function dv(v,c=''){
+  const cols={g:'#00e87a',y:'#f5c518',o:'#ff6b35',p:'#8b5cf6','':"#00c8f8"};
+  return`<span style="background:${cols[c]||cols['']}18;border:1px solid ${cols[c]||cols['']}33;color:${cols[c]||cols['']};padding:1px 5px;border-radius:3px;font-size:.63rem;margin:0 2px;font-family:monospace">${v}</span>`;
+}
+function addDerivRow(pid,label,content,type='n',delay=0){
+  return new Promise(res=>{
+    setTimeout(()=>{
+      const c=document.getElementById(pid);if(!c){res();return}
+      const bg=type==='r'?'rgba(0,232,122,.04)':type==='h'?'rgba(0,200,248,.04)':'#080e1a';
+      const bl=type==='r'?'3px solid #00e87a':type==='h'?'3px solid #00c8f8':'1px solid #1c2d4a';
+      const col=type==='r'?'#00e87a':'#dde8f5';
+      const d=document.createElement('div');d.className='deriv-row';
+      d.innerHTML=`<div class="drv-lbl">${label}</div><div class="drv-val ${type==='h'?'hi':type==='r'?'res':''}" style="color:${col}">${content}</div>`;
+      c.appendChild(d);
+      if(type!=='r'){const a=document.createElement('div');a.className='drv-arrow';a.textContent='↓';c.appendChild(a)}
+      res();
+    },delay);
+  });
+}
+
+/* ═══ PREVIEW BADGE ═══ */
+function previewBadge(){
+  return`<div class="preview-badge">
+    <span class="pb-icon">🔬</span>
+    <div class="pb-body">
+      <span class="pb-label">✦ Preview Mode</span>
+      <div class="pb-text">The live version generates this uniquely for your question.</div>
+      <div class="pb-subtext">In the full version with an API key, this section updates in real-time based on exactly what you typed above.</div>
+    </div>
+  </div>`;
+}
+
+/* ═══ STAGE CARD BUILDER ═══ */
+const STAGE_META=[
+  {emoji:'✂️',storyTitle:'Reading Your Message',storyTag:"AI doesn't read words — it reads puzzle pieces",techTitle:'Tokenization — BPE',techSub:'Byte Pair Encoding · 100K vocab · Subword merges'},
+  {emoji:'🗺️',storyTitle:'Understanding What Words Mean',storyTag:'Like a map where similar things live close together',techTitle:'Embeddings — Token IDs → Vectors',techSub:'Matrix row lookup · 4096 dims · Positional encoding'},
+  {emoji:'🔗',storyTitle:'Connecting Words to Each Other',storyTag:'How AI figures out what "it" refers to',techTitle:'Multi-Head Self-Attention',techSub:'Q·K·V matrices · Scaled dot-product · Causal mask'},
+  {emoji:'🧅',storyTitle:'Thinking in 96 Layers',storyTag:'Like rereading a book — each pass reveals more',techTitle:'Transformer Layers — 96× Attention + FFN',techSub:'LayerNorm · Residual stream · FFN 4× expansion'},
+  {emoji:'📋',storyTitle:"AI's Scratch Pad",storyTag:'A notepad it keeps while building the answer',techTitle:'KV Cache — Full Derivation',techSub:'K = embed × W_k · V = embed × W_v · O(n²)→O(n)'},
+  {emoji:'🗳️',storyTitle:'Choosing What to Say Next',storyTag:'A weighted vote across 100,000 possibilities',techTitle:'Logits, Softmax & Sampling',techSub:'LM head · W_u [4096×100K] · Softmax · Top-P'},
+  {emoji:'📄',storyTitle:'What AI Actually Remembers',storyTag:'No memory — it rereads everything, every time',techTitle:'Context Window — Token Budget',techSub:'200K tokens · Full history resent each turn'},
+  {emoji:'💰',storyTitle:'What This Conversation Costs',storyTag:'Tiny per call — but the system prompt is always the surprise',techTitle:'Token Economy — Pricing & Scale',techSub:'Input vs output pricing · System prompt overhead'},
+  {emoji:'🔨',storyTitle:'Building the Answer Word by Word',storyTag:'AI guesses the next word, then the next…',techTitle:'Auto-regressive Decoding',techSub:'Append token → rerun pipeline · KV cache grows'},
+];
+
+function buildPipeline(){
+  const pipe=document.getElementById('pipeline');
+  pipe.innerHTML='';
+  STAGE_META.forEach((m,i)=>{
+    const card=document.createElement('div');
+    card.className='stage-card';card.id='card-'+(i+1);
+    card.innerHTML=`
+      <div class="s-header" onclick="toggleCard(${i+1})">
+        <div class="s-emoji-wrap">
+          <div class="s-emoji">${m.emoji}</div>
+          <div class="s-badge">${i+1}</div>
+        </div>
+        <div class="s-info">
+          <div class="s-title story-view">${m.storyTitle}</div>
+          <div class="s-title tech-view">${m.techTitle}</div>
+          <div class="s-tagline story-view">${m.storyTag}</div>
+          <div class="s-tagline tech-view" style="font-family:monospace">${m.techSub}</div>
+        </div>
+        <div class="s-status" id="st-${i+1}">waiting</div>
+      </div>
+      <div class="s-body" id="body-${i+1}">
+        <div class="s-inner">
+          <div class="story-view" id="sc-${i+1}"></div>
+          <div class="tech-view" id="tc-${i+1}"></div>
+        </div>
+      </div>`;
+    pipe.appendChild(card);
+    if(i<8){const c=document.createElement('div');c.className='conn';pipe.appendChild(c)}
+  });
+}
+
+function toggleCard(n){document.getElementById('body-'+n).classList.toggle('open')}
+function activateStage(n){
+  const card=document.getElementById('card-'+n);
+  card.className='stage-card active';
+  document.getElementById('st-'+n).textContent=currentMode==='story'?'✨ happening…':'processing…';
+  document.getElementById('body-'+n).classList.add('open');
+  setProgress(n);
+}
+function doneStage(n){
+  document.getElementById('card-'+n).className='stage-card done';
+  document.getElementById('st-'+n).textContent=currentMode==='story'?'✓ got it!':'✓ done';
+}
+
+/* ═══ HUD ═══ */
+function showHUD(){
+  document.getElementById('hud').style.transform='translateY(0)';
+  document.body.style.paddingBottom='62px';
+  initModelTabs();updateHUD();
+}
+function toggleHUD(){
+  hudOpen=!hudOpen;
+  document.getElementById('hud-panel').style.display=hudOpen?'block':'none';
+  document.getElementById('hud-hint').textContent=hudOpen?'▼ collapse':'▲ expand';
+  document.body.style.paddingBottom=hudOpen?'320px':'62px';
+}
+function initModelTabs(){
+  const c=document.getElementById('h-mtabs');c.innerHTML='';
+  MODELS.forEach((m,i)=>{
+    const t=document.createElement('button');t.className='mtab'+(i===selectedModel?' active':'');
+    t.textContent=m.name;t.onclick=()=>{selectedModel=i;initModelTabs();updateHUD();};c.appendChild(t);
+  });
+}
+function updateHUD(){
+  const m=MODELS[selectedModel];
+  const ic=(hudState.inTok/1e6)*m.inP,oc=(hudState.outTok/1e6)*m.outP,tot=ic+oc;
+  const elapsed=hudState.startTime?(Date.now()-hudState.startTime)/1000:0;
+  const tps=elapsed>0.5?(hudState.outTok/elapsed).toFixed(1):'—';
+  document.getElementById('h-in').textContent=hudState.inTok.toLocaleString();
+  document.getElementById('h-out').textContent=hudState.outTok.toLocaleString();
+  document.getElementById('h-cost').textContent='$'+tot.toFixed(6);
+  document.getElementById('h-tps').textContent=tps==='—'?'—':tps+' t/s';
+  const pct=Math.min(100,((hudState.inTok+hudState.outTok)/m.ctx)*100);
+  document.getElementById('h-econ').innerHTML=`
+    <div class="econ-card"><div class="econ-title">Input cost</div><div class="econ-formula">${hudState.inTok} tok × $${m.inP}/Mtok</div><div class="econ-val">$${ic.toFixed(6)}</div></div>
+    <div class="econ-card"><div class="econ-title">Output cost</div><div class="econ-formula">${hudState.outTok} tok × $${m.outP}/Mtok</div><div class="econ-val">$${oc.toFixed(6)}</div></div>
+    <div class="econ-card hi"><div class="econ-title">Total this call</div><div class="econ-formula">input + output</div><div class="econ-val g">$${tot.toFixed(6)}</div></div>
+    <div class="econ-card"><div class="econ-title">Context used</div><div class="econ-formula">${pct.toFixed(1)}% of ${m.ctx.toLocaleString()}</div><div style="height:5px;background:#1c2d4a;border-radius:3px;margin-top:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#00c8f8,#8b5cf6);border-radius:3px"></div></div></div>`;
+  updateScale();
+}
+function updateScale(){
+  const idx=parseInt(document.getElementById('scaleSlider').value);
+  document.getElementById('scaleLbl').textContent=SCALE_LABS[idx];
+  const m=MODELS[selectedModel],pc=((hudState.inTok/1e6)*m.inP)+((hudState.outTok/1e6)*m.outP);
+  const daily=SCALE_VALS[idx];
+  document.getElementById('scale-cards').innerHTML=[['per day',daily],['per month',daily*30],['per year',daily*365],['per 1M calls',1e6]].map(([l,mult])=>{
+    const v=pc*mult,f=v>=1000?'$'+(v/1000).toFixed(1)+'K':v>=1?'$'+v.toFixed(2):'$'+v.toFixed(4);
+    return`<div class="sc-mini"><div class="sc-val">${f}</div><div class="sc-lbl">${l}</div></div>`;
+  }).join('');
+}
+function buildAnatomy(id,totalIn,sys,user,hist){
+  document.getElementById(id).innerHTML=[['System prompt',sys,'#ff6b35'],['History',hist,'#8b5cf6'],['Your message',user,'#f5c518']].map(([l,tok,col])=>`
+    <div class="anat-row"><div class="anat-lbl">${l}</div><div class="anat-bg"><div class="anat-fill" style="width:${Math.max(2,(tok/totalIn*100)).toFixed(0)}%;background:${col}"></div></div><div class="anat-val">${tok} tok</div></div>`).join('');
+}
+
+/* ═══ MAIN PIPELINE ═══ */
+async function runPipeline(){
+  const input=document.getElementById('userInput').value.trim();
+  if(!input)return;
+  const btn=document.getElementById('runBtn');btn.disabled=true;btn.textContent='⏳';
+  buildPipeline();
+  setProgress(0,'Starting…');
+  hudState.inTok=0;hudState.outTok=0;hudState.startTime=null;
+  document.getElementById('hud').style.transform='translateY(100%)';
+  await sleep(150);
+
+  const toks=tokenize(input);
+  const tok0=toks[0]||{text:'word',id:4898};
+  const tok1=toks[1]||{text:'is',id:2003};
+  const SYS=820,HIST=3200,USER=toks.length+Math.ceil(input.length/12);
+  const totalIn=SYS+HIST+USER;
+
+  /* ── S1: TOKENIZATION ── */
+  activateStage(1);await sleep(speed*.3);
+
+  // Story
+  const sc1=document.getElementById('sc-1');
+  sc1.innerHTML=`
+    <div class="analogy"><div class="analogy-icon">🧩</div><div class="analogy-text">AI doesn't read words — it reads <strong>puzzle pieces</strong>. Your message gets cut into chunks called <strong>tokens</strong>. "Cooking" splits into "Cook"+"ing". Only <em>100,000 possible chunks</em> — enough for every language.</div></div>
+    <div class="viz-box"><div class="viz-title">Your message cut into ${toks.length} pieces</div><div class="tok-chips" id="s1-chips"></div></div>
+    <div class="myth"><span style="font-size:1.1rem;flex-shrink:0">💭</span><div><div class="myth-wrong">AI reads your message like a human</div><div class="myth-right">✅ AI sees numbered puzzle pieces. "Hello" is just piece #15496.</div></div></div>
+    <div class="fun-fact"><span>💡</span><span>1 token ≈ ¾ of a word. Your message has <strong>${toks.length} tokens</strong>.</span></div>`;
+  for(let i=0;i<toks.length;i++){
+    await sleep(140);
+    const c=document.createElement('div');c.className='tok-chip';c.style.animationDelay='0s';
+    c.innerHTML=`${toks[i].text}<span class="tok-badge">#${toks[i].id}</span>`;
+    document.getElementById('s1-chips').appendChild(c);
+  }
+
+  // Tech
+  const tc1=document.getElementById('tc-1');
+  const words=input.trim().split(/\s+/).slice(0,9);
+  tc1.innerHTML=`
+    <div class="t-section"><div class="t-sec-title">Final tokens + IDs</div><div style="display:flex;flex-wrap:wrap;gap:5px">${toks.map(t=>`<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:5px;padding:4px 8px;font-size:.75rem;color:#c4b5fd;font-family:monospace">${t.text}<span style="font-size:.58rem;color:#8fa3be;display:block;text-align:center">#${t.id}</span></div>`).join('')}</div></div>
+    <div class="t-section"><div class="t-sec-title">BPE merge rounds</div><div id="tc1-bpe"></div></div>`;
+  [
+    {label:'Round 1 — merge highest-freq pairs',tokens:words.map(w=>w.length>=4?[{t:w.slice(0,2),m:true},{t:w.slice(2),m:false}]:[{t:w,m:false}]).flat()},
+    {label:'Round 2 — merge subword fragments',tokens:words.map(w=>w.length>=5?[{t:w.slice(0,Math.ceil(w.length/2)),m:true},{t:w.slice(Math.ceil(w.length/2)),m:true}]:[{t:w,m:true}]).flat()},
+  ].forEach(round=>{
+    const div=document.createElement('div');div.style.marginBottom='8px';
+    div.innerHTML=`<div style="font-size:.6rem;color:#3d5472;margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px">${round.label}</div><div style="display:flex;flex-wrap:wrap;gap:4px">${round.tokens.map(t=>`<div style="padding:3px 8px;border-radius:4px;font-size:.7rem;border:1px solid ${t.m?'rgba(0,200,248,.35)':'rgba(255,107,53,.35)'};color:${t.m?'#00c8f8':'#ff6b35'};font-family:monospace">${t.t}${t.m?'<span style="font-size:.55rem;background:rgba(0,200,248,.15);padding:0 3px;border-radius:2px;margin-left:3px">merged</span>':''}</div>`).join('')}</div>`;
+    document.getElementById('tc1-bpe').appendChild(div);
+  });
+
+  await sleep(speed*.4);doneStage(1);
+  hudState.inTok=totalIn;hudState.startTime=Date.now();
+  showHUD();buildAnatomy('h-anatomy',totalIn,SYS,USER,HIST);
+
+  /* ── S2: EMBEDDINGS ── */
+  await sleep(220);activateStage(2);await sleep(speed*.3);
+  const sw=PRESET.similar_words;
+  const simData=[[tok0.text,100],...sw.map((w,i)=>[w,Math.floor(72-i*11+Math.random()*5)])];
+
+  // Story
+  const sc2=document.getElementById('sc-2');
+  sc2.innerHTML=`
+    <div class="analogy"><div class="analogy-icon">🗺️</div><div class="analogy-text">Every word has an address on a giant map. <strong>Similar words live near each other.</strong> When AI reads your word it finds its address — made of <em>thousands of tiny coordinates</em>.</div></div>
+    <div class="viz-box"><div class="viz-title">Words near "${tok0.text}" on the meaning map</div><div id="s2-simbars"></div></div>
+    <div class="myth"><span style="font-size:1.1rem;flex-shrink:0">💭</span><div><div class="myth-wrong">AI understands words the way humans do</div><div class="myth-right">✅ AI understands words as locations in a math space — "warm" lives 3 steps from "comfortable" on the map.</div></div></div>`;
+  simData.forEach(([w,pct],i)=>{
+    setTimeout(()=>{
+      const row=document.createElement('div');row.className='sim-row';row.style.animationDelay='0s';
+      row.innerHTML=`<div class="sim-word">${w}</div><div class="sim-bar-bg"><div class="sim-bar" id="sb2-${i}" style="background:${COLORS[i]}">${i===0?'<span>← your word</span>':''}</div></div><div class="sim-pct">${pct}%</div>`;
+      document.getElementById('s2-simbars').appendChild(row);
+      setTimeout(()=>{const b=document.getElementById('sb2-'+i);if(b)b.style.width=pct+'%'},80);
+    },i*160);
+  });
+
+  // Tech
+  const tc2=document.getElementById('tc-2');
+  tc2.innerHTML=`
+    <div class="t-section"><div class="t-sec-title">Derivation — where embedding values come from</div><div id="tc2-deriv"></div></div>
+    <div class="t-section"><div class="t-sec-title">Embedding heatmap (hover for value)</div><div class="emb-grid" id="tc2-grid" style="grid-template-columns:repeat(48,1fr)"></div><div id="tc2-labels" style="display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;font-size:.55rem;color:#8fa3be"></div></div>
+    <div class="t-section"><div class="t-sec-title">Positional encoding — PE(pos,2i) = sin(pos/10000^(2i/d))</div><div id="tc2-pos-deriv"></div></div>`;
+  await addDerivRow('tc2-deriv','Token text',`"<span style="color:#f5c518">${tok0.text}</span>" → ID ${dv(tok0.id,'y')} (row in vocab)`,'n',speed*.06);
+  await addDerivRow('tc2-deriv','Matrix lookup',`E [100K×4096] → fetch row ${dv(tok0.id,'y')}`,'h',speed*.08);
+  await addDerivRow('tc2-deriv','Row extracted',`E[${tok0.id}] = [${dv('0.23')}, ${dv('-0.41','o')}, ${dv('0.87')}, ...] (4096 values)`,'n',speed*.08);
+  await addDerivRow('tc2-deriv','These values','Started random — shaped by gradient descent. Similar contexts → similar vectors.','r',speed*.08);
+
+  const DIMS=48,TOKS=Math.min(toks.length,6);
+  const grid=document.getElementById('tc2-grid');
+  for(let t=0;t<TOKS;t++){
+    for(let d=0;d<DIMS;d++){
+      const v=Math.abs(Math.sin(t*13.7+d*.4)*.7+Math.random()*.3);
+      const c=document.createElement('div');c.className='emb-cell';c.style.background=heatColor(v);c.title=`"${toks[t].text}" dim ${d}: ${v.toFixed(3)}`;
+      grid.appendChild(c);
+    }
+    const l=document.createElement('span');l.textContent=toks[t].text;l.style.marginRight=(DIMS*2)+'px';
+    document.getElementById('tc2-labels').appendChild(l);
+  }
+  await addDerivRow('tc2-pos-deriv','Position 0',`"${tok0.text}" is at pos 0`,'n',speed*.06);
+  await addDerivRow('tc2-pos-deriv','PE(0,dim 0)',`sin(0/10000^0) = sin(0) = ${dv('0.000')}`,'n',speed*.06);
+  await addDerivRow('tc2-pos-deriv','Added to embed',`final = embed ${`<span style="background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);color:#f5c518;padding:1px 5px;border-radius:3px;font-size:.62rem">+</span>`} PE → [${dv('0.23')}, ${dv('0.59','g')}, ...]`,'r',speed*.1);
+  await sleep(speed*.3);doneStage(2);
+
+  /* ── S3: ATTENTION ── */
+  await sleep(220);activateStage(3);await sleep(speed*.3);
+
+  // Story
+  const sc3=document.getElementById('sc-3');
+  sc3.innerHTML=`
+    <div class="analogy"><div class="analogy-icon">🕵️</div><div class="analogy-text">Every word looks at every other word: <strong>"Are you relevant to me?"</strong> In "The cat sat because <em>it</em> was tired" — "it" finds "cat". This happens <em>simultaneously for 32 relationship-checkers</em>.</div></div>
+    <div class="viz-box"><div class="viz-title">Tap a word to see what it pays attention to</div><div id="s3-toks" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px"></div><div id="s3-exp" class="attn-exp">👆 Tap a word above</div></div>
+    <div class="fun-fact"><span>💡</span><span>This runs <strong>32 times in parallel</strong> — each checker specialises: grammar, meaning, who did what to whom…</span></div>`;
+  toks.forEach((tok,i)=>{
+    const chip=document.createElement('div');chip.className='attn-tok';
+    chip.style.cssText=`border-color:${COLORS[i%8]};color:${COLORS[i%8]};background:${COLORS[i%8]}18;animation-delay:${i*.07}s`;
+    chip.textContent=tok.text;
+    chip.onclick=()=>{
+      document.querySelectorAll('.attn-tok').forEach(c=>c.style.transform='');
+      chip.style.transform='scale(1.12)';
+      const others=toks.filter(t=>t.text!==tok.text).slice(0,2).map(t=>`"${t.text}"`).join(' and ');
+      document.getElementById('s3-exp').innerHTML=`<strong>"${tok.text}"</strong> pays strong attention to ${others} — these words are closely related in meaning and context.`;
+    };
+    document.getElementById('s3-toks').appendChild(chip);
+  });
+
+  // Tech
+  const tc3=document.getElementById('tc-3');
+  const n=Math.min(toks.length,7);
+  tc3.innerHTML=`
+    <div class="t-section"><div class="t-sec-title">Q, K, V derivation</div><div id="tc3-qkv"></div></div>
+    <div class="t-section"><div class="t-sec-title">Attention score derivation</div><div id="tc3-attn"></div></div>
+    <div class="t-section"><div class="t-sec-title">Causal attention matrix — hover for scores</div><div style="overflow-x:auto"><div class="attn-matrix" id="tc3-matrix" style="grid-template-columns:32px ${Array(n).fill('30px').join(' ')}"></div></div></div>`;
+  await addDerivRow('tc3-qkv','Embedding x',`x = E[${tok0.id}]+PE = [${dv('0.23')}, ${dv('-0.41','o')}, ${dv('0.87')}, ...]`,'n',speed*.06);
+  await addDerivRow('tc3-qkv','W_q (learned)',`W_q [4096×128] col: [${dv('0.12','y')}, ${dv('-0.34','o')}, ${dv('0.56','y')}, ...]`,'n',speed*.08);
+  await addDerivRow('tc3-qkv','Q = x·W_q',`Q[0] = (0.23×0.12)+(−0.41×−0.34)+... = ${dv('0.41','y')}`,'h',speed*.1);
+  await addDerivRow('tc3-qkv','K = x·W_k',`K[0] = ${dv('-0.97','o')} ← the Key in the KV cache!`,'n',speed*.08);
+  await addDerivRow('tc3-qkv','V = x·W_v',`V[0] = ${dv('-0.43','o')} ← the Value in the KV cache!`,'r',speed*.08);
+  await addDerivRow('tc3-attn','Q of tok0',`Q["${tok0.text}"] = ${dv('0.41','y')}`,'n',speed*.06);
+  await addDerivRow('tc3-attn','K of tok1',`K["${tok1.text}"] = ${dv('0.63','y')}`,'n',speed*.06);
+  await addDerivRow('tc3-attn','Q·K dot product',`0.41 × 0.63 = ${dv('0.258','y')} (raw attention score)`,'h',speed*.1);
+  await addDerivRow('tc3-attn','Scale by √128',`÷ 11.31 → ${dv('0.023','y')} (prevents exploding gradients)`,'n',speed*.08);
+  await addDerivRow('tc3-attn','After softmax',`→ ${dv('0.38','g')} — "${tok0.text}" gives 38% attention to "${tok1.text}"`,'r',speed*.08);
+
+  const mtx=document.getElementById('tc3-matrix');
+  const blank=document.createElement('div');blank.style.cssText='width:32px;height:30px';mtx.appendChild(blank);
+  toks.slice(0,n).forEach(t=>{const h=document.createElement('div');h.className='attn-cell';h.style.cssText='opacity:1;font-size:.52rem;color:#8fa3be';h.textContent=t.text.slice(0,4);mtx.appendChild(h)});
+  for(let i=0;i<n;i++){
+    const lbl=document.createElement('div');lbl.className='attn-cell';lbl.style.cssText='opacity:1;font-size:.52rem;color:#8fa3be';lbl.textContent=toks[i].text.slice(0,4);mtx.appendChild(lbl);
+    for(let j=0;j<n;j++){
+      await sleep(12);
+      let v=j<=i?Math.abs(Math.sin(i*3.1+j*1.7)*.6+Math.random()*.4):0;
+      if(i===j)v=Math.min(v+.25,1);
+      const c=document.createElement('div');c.className='attn-cell';c.style.background=`rgba(0,200,248,${(v*.9).toFixed(2)})`;
+      c.title=`"${toks[i]?.text}"→"${toks[j]?.text}": ${Math.round(v*100)}%`;
+      c.onmouseenter=e=>e.target.style.transform='scale(1.3)';c.onmouseleave=e=>e.target.style.transform='scale(1)';
+      mtx.appendChild(c);
+    }
+  }
+  await sleep(speed*.4);doneStage(3);
+
+  /* ── S4: LAYERS ── */
+  await sleep(220);activateStage(4);await sleep(speed*.3);
+
+  const sGroups=[
+    ['Layers 1–10: Grammar & word order',100,'#ff9a5c','Is this a question? Who does what?'],
+    ['Layers 11–30: Topics & entities',88,'#b39dff','What topic — food, science, finance?'],
+    ['Layers 31–60: Meaning & intent',74,'#42a5f5','What does the person actually want?'],
+    ['Layers 61–80: Knowledge & facts',62,'#4db6ac','What do I know about this?'],
+    ['Layers 81–96: Crafting the reply',45,'#f48fb1','What should I actually say?'],
+  ];
+  const sc4=document.getElementById('sc-4');
+  sc4.innerHTML=`
+    <div class="analogy"><div class="analogy-icon">🏗️</div><div class="analogy-text">Imagine rereading a book <strong>96 times</strong>. Each pass reveals more. First: just grammar. Middle: what topic is this? Last: <em>what should I actually say?</em></div></div>
+    <div id="s4-layers"></div>
+    <div class="myth"><span style="font-size:1.1rem;flex-shrink:0">💭</span><div><div class="myth-wrong">AI thinks once and gives an answer</div><div class="myth-right">✅ AI "thinks" 96 times for every response. Each layer refines understanding.</div></div></div>`;
+  for(const [lbl,pct,col,desc] of sGroups){
+    await sleep(speed*.22);
+    const row=document.createElement('div');row.className='lt-row';row.style.animationDelay='0s';
+    row.innerHTML=`<div class="lt-dot" style="background:${col};border:2px solid ${col}"></div><div style="flex:1"><div style="font-size:.74rem;font-weight:800;margin-bottom:2px">${lbl}</div><div class="lt-bar-bg"><div class="lt-bar" id="lb-${lbl.slice(0,5)}" style="background:${col}"></div></div><div class="lt-desc">${desc}</div></div>`;
+    document.getElementById('s4-layers').appendChild(row);
+    setTimeout(()=>{const b=document.getElementById('lb-'+lbl.slice(0,5));if(b)b.style.width=pct+'%'},80);
+  }
+
+  // Tech
+  const tc4=document.getElementById('tc-4');
+  tc4.innerHTML=`
+    <div class="t-section"><div class="t-sec-title">LayerNorm derivation</div><div id="tc4-ln"></div></div>
+    <div class="t-section"><div class="t-sec-title">Residual connection</div><div id="tc4-res"></div></div>
+    <div class="t-section"><div class="t-sec-title">FFN two-step projection</div><div id="tc4-ffn"></div></div>
+    <div class="t-section"><div class="t-sec-title">All 96 layers — forward pass</div><div class="layer-chips" id="tc4-chips"></div></div>`;
+  await addDerivRow('tc4-ln','Input x',`[${dv('0.23')}, ${dv('-0.41','o')}, ${dv('0.87')}, ...]`,'n',speed*.05);
+  await addDerivRow('tc4-ln','Mean μ',`(0.23+-0.41+...) ÷ 4096 = ${dv('0.018','y')}`,'n',speed*.07);
+  await addDerivRow('tc4-ln','Std σ',`√(mean of (xᵢ-μ)²) = ${dv('0.541','y')}`,'n',speed*.07);
+  await addDerivRow('tc4-ln','Normalise',`x̂ = (x-μ)/σ → (0.23-0.018)÷0.541 = ${dv('0.392','g')}`,'h',speed*.09);
+  await addDerivRow('tc4-ln','Scale & shift',`LN(x) = x̂ × γ + β (γ,β learned params)`,'r',speed*.07);
+  await addDerivRow('tc4-res','Input x',`[${dv('0.23')}, ${dv('-0.41','o')}, ...]`,'n',speed*.05);
+  await addDerivRow('tc4-res','Attn output',`Attn(LN(x)) = [${dv('0.18')}, ${dv('-0.29','o')}, ...]`,'n',speed*.07);
+  await addDerivRow('tc4-res','Residual add',`x_new = x + Attn = [${dv('0.41','g')}, ${dv('-0.70','o')}, ...]`,'r',speed*.09);
+  await addDerivRow('tc4-ffn','FFN input',`x = ${dv('0.41')}`,'n',speed*.05);
+  await addDerivRow('tc4-ffn','First linear ×4',`0.41×0.73+0.12 = ${dv('0.411','o')} (4096→16384)`,'n',speed*.07);
+  await addDerivRow('tc4-ffn','ReLU',`max(0, 0.411) = ${dv('0.411','g')} (negatives zeroed)`,'h',speed*.09);
+  await addDerivRow('tc4-ffn','Second linear ÷4',`0.411×-0.34+0.05 = ${dv('-0.090','o')} (16384→4096)`,'n',speed*.07);
+  await addDerivRow('tc4-ffn','Residual',`0.41 + (-0.090) = ${dv('0.320','g')} → next layer`,'r',speed*.07);
+
+  const layerNames=['L1: Token','L2: Pos','L3: Bigrams','L4: Syntax','L5: Grammar','L10: Deps','L20: Entities','L30: NER','L40: Context','L50: Reasoning','L60: Semantics','L70: Plan','L80: Cohere','L90: Style','L96: Output','...+81 more'];
+  for(const nm of layerNames){
+    await sleep(speed*.04);
+    const c=document.createElement('div');c.className='lchip';c.style.animationDelay='0s';c.textContent=nm;
+    document.getElementById('tc4-chips').appendChild(c);
+  }
+  await sleep(speed*.3);doneStage(4);
+
+  /* ── S5: KV CACHE ── */
+  await sleep(220);activateStage(5);await sleep(speed*.3);
+
+  const sc5=document.getElementById('sc-5');
+  sc5.innerHTML=`
+    <div class="analogy"><div class="analogy-icon">📝</div><div class="analogy-text">While writing a long email you jot down key phrases so you don't re-read the whole thing. AI does the same — saves a "note" about each word so it doesn't reprocess everything for every new word it generates. <strong>This is the KV Cache.</strong></div></div>
+    <div id="s5-kv"></div>
+    <div class="fun-fact"><span>💡</span><span>Without this notepad, generating 500 words needs <strong>250,000 re-reads</strong>. The notepad cuts this to just <strong>500 single reads</strong>.</span></div>`;
+
+  const tc5=document.getElementById('tc-5');
+  tc5.innerHTML=`
+    <div class="t-section"><div class="t-sec-title">Full derivation — raw text → K = -0.97, V = -0.43</div><div id="tc5-deriv"></div></div>
+    <div class="t-section"><div class="t-sec-title">Live KV table</div><div style="overflow-x:auto"><table class="kv-table"><thead><tr><th>Layer</th><th>Token</th><th>Key = embed×W_k</th><th>Value = embed×W_v</th></tr></thead><tbody id="tc5-tbody"></tbody></table></div></div>`;
+  await addDerivRow('tc5-deriv','Your text',`"<span style="color:#f5c518">${input.slice(0,35)}</span>"`,'n',speed*.06);
+  await addDerivRow('tc5-deriv','Tokens',`[${toks.slice(0,4).map(t=>`"${t.text}"`).join(', ')}...] → IDs`,'n',speed*.08);
+  await addDerivRow('tc5-deriv','Embed lookup',`E[${tok0.id}] = [${dv('0.23')}, ${dv('-0.41','o')}, ${dv('0.87')}, ...]`,'n',speed*.08);
+  await addDerivRow('tc5-deriv','+ Positional',`x = embed+PE = [${dv('0.23')}, ${dv('0.59','g')}, ${dv('0.87')}, ...]`,'n',speed*.08);
+  await addDerivRow('tc5-deriv','LayerNorm',`LN(x): mean=${dv('0.018','y')}, std=${dv('0.541','y')} → normalised x̂`,'n',speed*.08);
+  await addDerivRow('tc5-deriv','K = x̂·W_k',`W_k [4096×128] learned. K[0] = ${dv('-0.97','o')} ← that exact number!`,'h',speed*.1);
+  await addDerivRow('tc5-deriv','V = x̂·W_v',`W_v [4096×128] learned. V[0] = ${dv('-0.43','o')} ← that one too!`,'h',speed*.1);
+  await addDerivRow('tc5-deriv','Cached',`K,V stored — no recompute on next output token`,'r',speed*.08);
+
+  for(let l=1;l<=3;l++){
+    for(const tok of toks.slice(0,3)){
+      await sleep(speed*.07);
+      const kV=Array.from({length:3},(_,i)=>(Math.sin(tok.id*.0017+l*.3+i*.7)*1.2).toFixed(2));
+      const vV=Array.from({length:3},(_,i)=>(Math.cos(tok.id*.0013+l*.4+i*.5)*.9).toFixed(2));
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td style="color:#3d5472">L${l}</td><td style="color:#c4b5fd">"${tok.text}"</td><td style="color:#ff6b35">[${kV.join(', ')},...]=E[${tok.id}]×W_k</td><td style="color:#8b5cf6">[${vV.join(', ')},...]=E[${tok.id}]×W_v</td>`;
+      document.getElementById('tc5-tbody').appendChild(tr);
+      // Story row
+      const krow=document.createElement('div');krow.className='kv-row';krow.style.animationDelay='0s';
+      krow.innerHTML=`<span style="font-size:1rem">📝</span><div style="flex:1"><div style="font-size:.8rem;font-weight:800">"${tok.text}" — Layer ${l}</div><div style="font-size:.65rem;opacity:.5">Key note + Value note saved</div></div><div style="font-size:.68rem;font-weight:700;color:#4db6ac">saved ✓</div>`;
+      document.getElementById('s5-kv').appendChild(krow);
+    }
+  }
+  await sleep(speed*.3);doneStage(5);
+
+  /* ── S6: LOGITS — PREVIEW MODE ── */
+  await sleep(220);activateStage(6);await sleep(speed*.3);
+  document.getElementById('st-6').textContent='🔬 preview';
+
+  const cands=PRESET.candidates;
+  const sc6=document.getElementById('sc-6');
+  sc6.innerHTML=`
+    ${previewBadge()}
+    <div class="analogy"><div class="analogy-icon">🗳️</div><div class="analogy-text">Imagine a ballot box with 100,000 slips. After all that thinking, most have zero votes. A few have lots. <strong>AI picks one, weighted by votes.</strong> <em>That's why the same question gets different answers each time.</em></div></div>
+    <div class="viz-box"><div class="viz-title">Candidate vote — representative example</div><div id="s6-cands"></div></div>
+    <div class="myth"><span style="font-size:1.1rem;flex-shrink:0">💭</span><div><div class="myth-wrong">AI knows "the right answer" and says it</div><div class="myth-right">✅ AI only knows which words are most likely next — based on patterns from billions of documents.</div></div></div>`;
+  cands.forEach((c,i)=>{
+    setTimeout(()=>{
+      const row=document.createElement('div');row.className='sim-row';row.style.animationDelay='0s';
+      row.innerHTML=`<div class="sim-word">${c.word}</div><div class="sim-bar-bg"><div class="sim-bar" id="s6b-${i}" style="background:${COLORS[i]}">${i===0?'<span>← chosen!</span>':''}</div></div><div class="sim-pct">${c.pct}%</div>`;
+      document.getElementById('s6-cands').appendChild(row);
+      setTimeout(()=>{const b=document.getElementById('s6b-'+i);if(b)b.style.width=c.pct+'%'},100+i*60);
+    },i*140);
+  });
+
+  const tc6=document.getElementById('tc-6');
+  const eS=cands.reduce((s,c)=>s+Math.exp(c.pct*.1),0);
+  tc6.innerHTML=`
+    ${previewBadge()}
+    <div class="t-section"><div class="t-sec-title">Hidden state → logit derivation</div><div id="tc6-deriv"></div></div>
+    <div class="t-section"><div class="t-sec-title">Softmax — logits → probabilities (representative example)</div>
+      <div style="display:flex;gap:7px;font-size:.62rem;color:#3d5472;margin-bottom:5px"><span style="width:110px">Token</span><span style="width:48px;text-align:right">Logit</span><span style="width:44px;text-align:right">Prob %</span><span style="flex:1">Bar</span></div>
+      <div id="tc6-softmax"></div>
+    </div>
+    <div class="t-section"><div class="t-sec-title">Sampling — Top-P (Nucleus)</div><div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.18);border-radius:7px;padding:9px 13px;font-size:.7rem;line-height:1.7;opacity:.85"><strong style="color:#00c8f8">Top-P (Nucleus):</strong> Smallest set of tokens whose cumulative prob ≥ 0.9. If model is confident: 2–3 tokens qualify. If uncertain: 50+. More adaptive than Top-K. Default for Claude.</div></div>`;
+  await addDerivRow('tc6-deriv','Final hidden h','After L96: [0.41, -0.70, 1.30, 0.22, ...] (4096 values)','n',speed*.06);
+  await addDerivRow('tc6-deriv','W_u [4096×100K]',`One column per vocab token. Col for "${cands[0].word}": [1.23, -0.45, 0.78, ...]`,'n',speed*.08);
+  await addDerivRow('tc6-deriv','logit = h·W_u','(0.41×1.23)+(−0.70×−0.45)+... = 3.82 (raw score)','h',speed*.1);
+  await addDerivRow('tc6-deriv','Apply temp T=1','logits ÷ 1.0 → unchanged. At T=0.5 top logit = 7.64 — sharper','r',speed*.08);
+  cands.forEach((c,i)=>{
+    setTimeout(()=>{
+      const prob=((Math.exp(c.pct*.1)/eS)*100).toFixed(1);
+      const row=document.createElement('div');row.className='sm-row';row.style.animationDelay='0s';
+      row.innerHTML=`<span class="sm-word">${c.word}</span><span class="sm-logit">${(c.pct*.045+1.5).toFixed(2)}</span><span class="sm-prob">${prob}%</span><div class="sm-bar-bg"><div class="sm-bar" id="tc6b-${i}" style="background:${COLORS[i]}"></div></div>${i===0?'<span class="sm-sel">← chosen</span>':''}`;
+      document.getElementById('tc6-softmax').appendChild(row);
+      setTimeout(()=>{const b=document.getElementById('tc6b-'+i);if(b)b.style.width=prob+'%'},80);
+    },i*140);
+  });
+  await sleep(speed*.5);doneStage(6);
+
+  /* ── S7: CONTEXT ── */
+  await sleep(220);activateStage(7);await sleep(speed*.3);
+
+  const ctxItems=[
+    {icon:'⚙️',label:'AI instructions (system prompt)',note:'Personality & rules — fixed overhead every call',tok:SYS,col:'#ff6b35'},
+    {icon:'💬',label:'Previous messages',note:'Full history resent every single turn',tok:HIST,col:'#8b5cf6'},
+    {icon:'✉️',label:`Your message: "${input.slice(0,25)}${input.length>25?'…':''}"`,note:'What you just typed',tok:USER,col:'#00c8f8'},
+  ];
+  const sc7=document.getElementById('sc-7');
+  sc7.innerHTML=`
+    <div class="analogy"><div class="analogy-icon">📄</div><div class="analogy-text">Someone who loses all memory after every conversation. You hand them a <strong>printed transcript of everything said</strong> at the start. They read it fresh, respond, forget. <em>That's exactly how AI works.</em></div></div>
+    <div id="s7-ctx" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div class="myth"><span style="font-size:1.1rem;flex-shrink:0">💭</span><div><div class="myth-wrong">AI remembers our previous conversations</div><div class="myth-right">✅ Zero memory between separate chats. If it seems to remember, your app includes past chats in every message.</div></div></div>`;
+  const tc7=document.getElementById('tc-7');
+  tc7.innerHTML=`
+    <div class="t-section"><div class="t-sec-title">What is in this request</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px" id="tc7-blocks"></div></div>
+    <div class="t-section"><div class="t-sec-title">Token budget</div><div class="stat-row" id="tc7-stats"></div></div>`;
+  for(const item of ctxItems){
+    await sleep(220);
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:flex-start;gap:10px;background:#111e35;border:1px solid #1c2d4a;border-radius:10px;padding:10px 12px;opacity:0;animation:popUp .3s forwards;animation-delay:0s';
+    div.innerHTML=`<span style="font-size:1.1rem">${item.icon}</span><div style="flex:1"><div style="font-size:.82rem;font-weight:800">${item.label}</div><div style="font-size:.68rem;opacity:.5;margin-top:2px">${item.note}</div><div style="height:4px;background:#1c2d4a;border-radius:2px;margin-top:6px;overflow:hidden"><div style="height:100%;background:${item.col};width:${((item.tok/totalIn)*100).toFixed(0)}%;border-radius:2px"></div></div></div><div style="font-size:.72rem;font-weight:900;color:${item.col};text-align:right;flex-shrink:0">${item.tok}<br><span style="font-size:.58rem;opacity:.5;font-weight:600">tokens</span></div>`;
+    document.getElementById('s7-ctx').appendChild(div);
+  }
+  [['⚙️ System~'+SYS+'tok','rgba(255,107,53,.12)','rgba(255,107,53,.35)','#ff6b35'],['💬 History~'+HIST+'tok','rgba(139,92,246,.1)','rgba(139,92,246,.3)','#8b5cf6'],['✉️ Msg~'+USER+'tok','rgba(0,200,248,.1)','rgba(0,200,248,.25)','#00c8f8'],['📝 Response↗','rgba(0,232,122,.08)','rgba(0,232,122,.2)','#00e87a']].forEach((c,i)=>{
+    setTimeout(()=>{const b=document.createElement('div');b.className='ctx-block';b.style.cssText=`background:${c[1]};border:1px solid ${c[2]};color:${c[3]};animation-delay:0s`;b.textContent=c[0];document.getElementById('tc7-blocks').appendChild(b)},i*100);
+  });
+  [['200K','Claude window'],['~'+Math.round(totalIn/1000)+'K','Used this call'],['~'+Math.round((200000-totalIn)/1000)+'K','Remaining'],['0.75','Words/token']].forEach((sv,i)=>{
+    const c=document.createElement('div');c.className='stat-card';c.style.animationDelay=i*.1+'s';
+    c.innerHTML=`<div class="sv">${sv[0]}</div><div class="sl">${sv[1]}</div>`;
+    document.getElementById('tc7-stats').appendChild(c);
+  });
+  await sleep(speed*.4);doneStage(7);
+
+  /* ── S8: COST ── */
+  await sleep(220);activateStage(8);await sleep(speed*.3);
+  const m=MODELS[selectedModel];
+  const outTokEst=Math.ceil(PRESET.response.split(' ').length*1.3);
+  const ic=(totalIn/1e6)*m.inP,oc=(outTokEst/1e6)*m.outP,tot=ic+oc;
+
+
+  const sc8=document.getElementById('sc-8');
+  sc8.innerHTML=`
+    <div class="analogy"><div class="analogy-icon">🍵</div><div class="analogy-text">AI charges per token. <strong>Each token costs a tiny fraction of a cent.</strong> The surprise: <em>your message is the cheapest part</em>. The system prompt is fixed overhead charged on every single call.</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      ${[['📨','You sent',totalIn+' tokens'],['📩','AI responds',outTokEst+' tokens'],['💵','Input cost','$'+ic.toFixed(6)],['💰','Total this call','$'+tot.toFixed(6),true]].map(([em,lbl,val,hi])=>`
+        <div style="background:${hi?'rgba(255,154,92,.06)':'#111e35'};border:1px solid ${hi?'rgba(255,154,92,.3)':'#1c2d4a'};border-radius:11px;padding:11px 13px;text-align:center">
+          <div style="font-size:1.3rem;margin-bottom:4px">${em}</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:${hi?'#ff9a5c':'#dde8f5'}">${val}</div>
+          <div style="font-size:.62rem;opacity:.55;margin-top:2px;text-transform:uppercase;letter-spacing:.8px">${lbl}</div>
+        </div>`).join('')}
+    </div>
+    <div class="fun-fact"><span>💡</span><span>This exchange costs <strong>$${tot.toFixed(6)}</strong>. At 1M daily calls that's <strong>$${(tot*1e6*30).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')} /month</strong>.</span></div>`;
+
+  const tc8=document.getElementById('tc-8');
+  tc8.innerHTML=`
+    <div class="t-section"><div class="t-sec-title">Model pricing</div><div class="model-tabs" id="tc8-tabs"></div><div class="econ-grid" id="tc8-econ"></div></div>
+    <div class="t-section scale-sec"><div class="scale-title">📈 Scale Projector</div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:.68rem;opacity:.6">Daily calls:</span><input type="range" min="0" max="5" value="2" oninput="updateTc8Scale(this)" id="tc8-slider" style="flex:1;min-width:100px;accent-color:#00c8f8"><span style="font-size:.73rem;color:#00c8f8;font-weight:700;width:75px;font-family:monospace" id="tc8-scale-lbl">10K/day</span></div><div class="scale-cards" id="tc8-scale-cards"></div></div>
+    <div class="t-section"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:#8b5cf6;margin-bottom:9px">🔬 Token Anatomy</div><div id="tc8-anatomy"></div></div>
+    <div class="receipt">
+      <div class="rr"><span>⚙️ System prompt (${SYS} tok)</span><span class="rv">$${(SYS/1e6*m.inP).toFixed(6)}</span></div>
+      <div class="rr"><span>💬 History (${HIST} tok)</span><span class="rv">$${(HIST/1e6*m.inP).toFixed(6)}</span></div>
+      <div class="rr"><span>✉️ Your message (${USER} tok)</span><span class="rv">$${(USER/1e6*m.inP).toFixed(6)}</span></div>
+      <div class="rr"><span>📝 AI response (~${outTokEst} tok)</span><span class="rv">$${oc.toFixed(6)}</span></div>
+      <div class="rr"><span>TOTAL</span><span class="rv">$${tot.toFixed(6)}</span></div>
+    </div>`;
+  MODELS.forEach((mod,i)=>{
+    const t=document.createElement('button');t.className='mtab'+(i===selectedModel?' active':'');t.textContent=mod.name;
+    t.onclick=()=>{selectedModel=i;document.querySelectorAll('#tc8-tabs .mtab').forEach((b,j)=>b.classList.toggle('active',j===i));renderTc8Econ();};
+    document.getElementById('tc8-tabs').appendChild(t);
+  });
+  function renderTc8Econ(){
+    const mx=MODELS[selectedModel];
+    const ix=(totalIn/1e6)*mx.inP,ox=(outTokEst/1e6)*mx.outP,tx=ix+ox;
+    document.getElementById('tc8-econ').innerHTML=`
+      <div class="econ-card"><div class="econ-title">Input cost</div><div class="econ-formula">${totalIn} tok × $${mx.inP}/Mtok</div><div class="econ-val">$${ix.toFixed(6)}</div></div>
+      <div class="econ-card"><div class="econ-title">Output cost</div><div class="econ-formula">${outTokEst} tok × $${mx.outP}/Mtok</div><div class="econ-val">$${ox.toFixed(6)}</div></div>
+      <div class="econ-card hi"><div class="econ-title">Total</div><div class="econ-formula">input + output</div><div class="econ-val g">$${tx.toFixed(6)}</div></div>`;
+  }
+  renderTc8Econ();
+  window.updateTc8Scale=function(el){
+    const idx=parseInt(el.value);
+    document.getElementById('tc8-scale-lbl').textContent=SCALE_LABS[idx];
+    const mx=MODELS[selectedModel],pc=((totalIn/1e6)*mx.inP)+((outTokEst/1e6)*mx.outP),daily=SCALE_VALS[idx];
+    document.getElementById('tc8-scale-cards').innerHTML=[['per day',daily],['per month',daily*30],['per year',daily*365],['per 1M calls',1e6]].map(([l,mult])=>{
+      const v=pc*mult,f=v>=1000?'$'+(v/1000).toFixed(1)+'K':v>=1?'$'+v.toFixed(2):'$'+v.toFixed(4);
+      return`<div class="sc-mini"><div class="sc-val">${f}</div><div class="sc-lbl">${l}</div></div>`;
+    }).join('');
+  };
+  window.updateTc8Scale(document.getElementById('tc8-slider'));
+  buildAnatomy('tc8-anatomy',totalIn,SYS,USER,HIST);
+  await sleep(speed*.4);doneStage(8);
+
+  /* ── S9: OUTPUT — PREVIEW MODE ── */
+  await sleep(220);activateStage(9);await sleep(speed*.2);
+  document.getElementById('st-9').textContent='🔬 preview';
+
+  const sc9=document.getElementById('sc-9');
+  sc9.innerHTML=`
+    ${previewBadge()}
+    <div class="analogy"><div class="analogy-icon">🧱</div><div class="analogy-text">AI picks one word, then uses it to guess the next — <strong>like building a wall one brick at a time.</strong> It doesn't know word 10 until it has written words 1–9. <em>The streaming is real.</em></div></div>
+    <div class="output-area story-out" id="s9-out"></div>
+    <div class="myth" style="margin-top:10px"><span style="font-size:1.1rem;flex-shrink:0">💭</span><div><div class="myth-wrong">AI writes the full answer then streams slowly for effect</div><div class="myth-right">✅ The streaming is real — AI does not know word 10 until it has written words 1 through 9.</div></div></div>`;
+
+  const tc9=document.getElementById('tc-9');
+  tc9.innerHTML=`
+    ${previewBadge()}
+    <div class="t-section"><div class="t-sec-title">Generation loop derivation</div><div id="tc9-deriv"></div></div>
+    <div class="t-section"><div class="t-sec-title">Live output stream — each chip shows per-token cost</div><div class="output-area tech-out" id="tc9-out"></div><div class="tok-ticker" id="tc9-ticker"></div></div>`;
+  await addDerivRow('tc9-deriv','Step 1','[System]+[History]+[Msg] → full forward pass → sample T₁','n',speed*.06);
+  await addDerivRow('tc9-deriv','T₁ sampled',`→ ${dv(cands[0].word,'g')} (${cands[0].pct}% probability)`,'h',speed*.08);
+  await addDerivRow('tc9-deriv','Append T₁','Context += token → forward pass with KV cache → sample T₂','n',speed*.08);
+  await addDerivRow('tc9-deriv','T₂ sampled',`→ ${dv('learning','g')} (conditioned on T₁)`,'h',speed*.08);
+  await addDerivRow('tc9-deriv','Until [EOS]','Loop repeats. KV cache grows. Each new token needs only 1 new K,V.','r',speed*.08);
+  await sleep(speed*.2);
+
+  // Stream the preset response
+  const respWords=PRESET.response.split(' ');
+  const startT=Date.now();
+  let built='';
+  for(let i=0;i<respWords.length;i++){
+    await sleep(75);
+    built+=(i>0?' ':'')+respWords[i];
+    const cursor='<span class="cursor"></span>';
+    document.getElementById('s9-out').innerHTML=built+cursor;
+    document.getElementById('tc9-out').innerHTML=built+cursor;
+    hudState.outTok=i+1;hudState.startTime=startT;
+    updateHUD();
+    const tokCost=(1.3/1e6)*MODELS[selectedModel].outP;
+    const chip=document.createElement('div');chip.className='ttick';chip.style.animationDelay='0s';
+    chip.innerHTML=`${respWords[i]}<span>$${tokCost.toFixed(7)}</span>`;
+    document.getElementById('tc9-ticker').appendChild(chip);
+  }
+  document.getElementById('s9-out').textContent=built;
+  document.getElementById('tc9-out').textContent=built;
+
+  doneStage(9);
+  setProgress(9,'✅ Complete');
+  btn.disabled=false;btn.textContent='▶ Run';
+}
+
+// init
+document.getElementById('userInput').addEventListener('keydown',e=>{if(e.key==='Enter')runPipeline()});
+buildPipeline();
+setTimeout(runPipeline,400);
+</script>
+</body>
+</html>
