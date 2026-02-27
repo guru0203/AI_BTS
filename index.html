@@ -290,19 +290,51 @@ body[data-mode="tech"]  .story-view{display:none!important}
 .anat-val{width:46px;text-align:right;color:var(--text2)}
 
 /* HUD */
-#hud{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:2px solid var(--cyan);box-shadow:0 -4px 24px rgba(0,0,0,.5),0 -1px 0 rgba(34,211,238,.15);transform:translateY(100%);transition:transform .4s cubic-bezier(.4,0,.2,1)}
-.hud-bar{display:flex;align-items:center;gap:16px;padding:9px 22px;cursor:pointer;flex-wrap:wrap}
-.hud-stat{display:flex;flex-direction:column}
-.hud-val{font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;line-height:1;color:var(--text)}
-.hud-val.g{color:var(--emerald)}
-.hud-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-top:2px}
-.hud-panel{display:none;padding:0 22px 18px}
-.hud-divider{height:1px;background:var(--border);margin-bottom:14px}
+#hud{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:2px solid var(--cyan);box-shadow:0 -4px 24px rgba(0,0,0,.5),0 -1px 0 rgba(103,232,249,.15);transform:translateY(100%);transition:transform .4s cubic-bezier(.4,0,.2,1)}
+/* collapsed bar — always slim */
+.hud-bar{display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;min-height:0}
+.hud-bar-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0;overflow:hidden}
+.hud-title{font-family:'Syne',sans-serif;font-weight:800;font-size:.7rem;color:var(--cyan);white-space:nowrap;flex-shrink:0}
+.hud-pills{display:flex;gap:6px;overflow:hidden}
+.hud-pill{display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:2px 8px;white-space:nowrap;flex-shrink:0}
+.hud-pill-val{font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;color:var(--text)}
+.hud-pill-val.g{color:var(--emerald)}
+.hud-pill-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.hud-toggle{font-size:.6rem;color:var(--muted);flex-shrink:0;padding:0 4px;transition:transform .3s}
+.hud-toggle.open{transform:rotate(180deg)}
+/* expanded panel */
+.hud-panel{display:none;padding:0 18px 16px;max-height:60vh;overflow-y:auto}
+.hud-divider{height:1px;background:var(--border);margin-bottom:12px}
+/* mobile — hide tok/s pill on small screens */
+@media(max-width:420px){.hud-pill.hide-sm{display:none}}
 
 /* kv table */
 .kv-table{width:100%;border-collapse:collapse;font-size:.68rem}
 .kv-table th{background:var(--bg2);color:var(--cyan);padding:5px 9px;text-align:left;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:.62rem;text-transform:uppercase;letter-spacing:.9px}
 .kv-table td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.03);font-family:monospace}
+
+/* token derivation table (Stage 8) */
+.tok-deriv-table{width:100%;border-collapse:collapse;font-size:.72rem;margin-bottom:12px}
+.tok-deriv-table thead tr{background:var(--bg2)}
+.tok-deriv-table th{padding:7px 10px;text-align:left;font-family:'Syne',sans-serif;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--text2);border-bottom:2px solid var(--border);font-weight:700}
+.tok-deriv-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-family:monospace;vertical-align:middle}
+.tok-deriv-table tr.total-row td{background:rgba(103,232,249,.05);border-top:2px solid var(--border2);font-weight:900;color:var(--cyan);border-bottom:none}
+.tok-deriv-table tr.output-row td{background:rgba(110,231,183,.04);color:var(--emerald)}
+.tok-deriv-table tr.grand-row td{background:rgba(192,132,252,.07);border-top:2px solid var(--border2);font-weight:900;color:var(--violet);font-size:.82rem;border-bottom:none}
+.td-bar-wrap{display:flex;align-items:center;gap:7px}
+.td-bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;min-width:50px}
+.td-bar-fill{height:100%;border-radius:4px;transition:width .8s ease;width:0%}
+.td-label{font-size:.68rem;font-weight:700;white-space:nowrap}
+.td-formula{font-size:.6rem;color:var(--muted);margin-top:2px;display:block;font-family:monospace}
+.formula-box{background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:10px 14px;margin-bottom:10px;font-family:monospace;font-size:.72rem;line-height:1.9}
+.formula-box .f-row{display:flex;align-items:baseline;gap:8px;padding:2px 0}
+.formula-box .f-lbl{width:140px;flex-shrink:0;color:var(--text2);font-size:.65rem}
+.formula-box .f-val{color:var(--text);font-weight:600}
+.formula-box .f-val.cyan{color:var(--cyan)}
+.formula-box .f-val.emerald{color:var(--emerald)}
+.formula-box .f-val.violet{color:var(--violet)}
+.formula-box .f-val.amber{color:var(--amber)}
+.formula-box .f-total{border-top:1px solid var(--border2);margin-top:6px;padding-top:6px;font-weight:900;font-size:.82rem}
 </style>
 </head>
 <body data-mode="tech">
@@ -341,14 +373,27 @@ body[data-mode="tech"]  .story-view{display:none!important}
 <!-- HUD -->
 <div id="hud">
   <div class="hud-bar" onclick="toggleHUD()">
-    <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:.75rem;color:#00c8f8;flex-shrink:0">💰 Token Economy</span>
-    <div style="display:flex;gap:18px;flex:1;flex-wrap:wrap">
-      <div class="hud-stat"><span class="hud-val" id="h-in">0</span><span class="hud-lbl">input tok</span></div>
-      <div class="hud-stat"><span class="hud-val" id="h-out">0</span><span class="hud-lbl">output tok</span></div>
-      <div class="hud-stat"><span class="hud-val g" id="h-cost">$0.000000</span><span class="hud-lbl">cost</span></div>
-      <div class="hud-stat"><span class="hud-val" id="h-tps">—</span><span class="hud-lbl">tok/s</span></div>
+    <div class="hud-bar-left">
+      <span class="hud-title">💰 Tokens</span>
+      <div class="hud-pills">
+        <div class="hud-pill">
+          <span class="hud-pill-val" id="h-in">0</span>
+          <span class="hud-pill-lbl">in</span>
+        </div>
+        <div class="hud-pill">
+          <span class="hud-pill-val" id="h-out">0</span>
+          <span class="hud-pill-lbl">out</span>
+        </div>
+        <div class="hud-pill">
+          <span class="hud-pill-val g" id="h-cost">$0.000000</span>
+        </div>
+        <div class="hud-pill hide-sm">
+          <span class="hud-pill-val" id="h-tps">—</span>
+          <span class="hud-pill-lbl">tok/s</span>
+        </div>
+      </div>
     </div>
-    <span style="font-size:.62rem;color:#3d5472;margin-left:auto" id="hud-hint">▲ expand</span>
+    <span class="hud-toggle" id="hud-hint">▲</span>
   </div>
   <div class="hud-panel" id="hud-panel">
     <div class="hud-divider"></div>
@@ -357,14 +402,14 @@ body[data-mode="tech"]  .story-view{display:none!important}
     <div class="scale-sec">
       <div class="scale-title">📈 Scale Projector</div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:.68rem;opacity:.6">Daily calls:</span>
-        <input type="range" min="0" max="5" value="2" oninput="updateScale()" id="scaleSlider" style="flex:1;min-width:100px;accent-color:#00c8f8">
-        <span style="font-size:.73rem;color:#00c8f8;font-weight:700;width:75px;font-family:monospace" id="scaleLbl">10K/day</span>
+        <span style="font-size:.68rem;color:var(--text2)">Daily calls:</span>
+        <input type="range" min="0" max="5" value="2" oninput="updateScale()" id="scaleSlider" style="flex:1;min-width:100px;accent-color:var(--cyan)">
+        <span style="font-size:.73rem;color:var(--cyan);font-weight:700;width:75px;font-family:monospace" id="scaleLbl">10K/day</span>
       </div>
       <div class="scale-cards" id="scale-cards"></div>
     </div>
-    <div style="background:#080e1a;border:1px solid #1c2d4a;border-radius:9px;padding:12px 14px;margin-top:10px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:#8b5cf6;margin-bottom:9px">🔬 Token Anatomy</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-top:10px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--violet);margin-bottom:9px">🔬 Token Anatomy</div>
       <div id="h-anatomy"></div>
     </div>
   </div>
@@ -518,6 +563,9 @@ function showHUD(){
 function toggleHUD(){
   hudOpen=!hudOpen;
   document.getElementById('hud-panel').style.display=hudOpen?'block':'none';
+  const hint=document.getElementById('hud-hint');
+  hint.textContent=hudOpen?'▼':'▲';
+  hint.classList.toggle('open',hudOpen);
   document.getElementById('hud-hint').textContent=hudOpen?'▼ collapse':'▲ expand';
   document.body.style.paddingBottom=hudOpen?'320px':'62px';
 }
@@ -574,8 +622,9 @@ async function runPipeline(){
   const toks=tokenize(input);
   const tok0=toks[0]||{text:'word',id:4898};
   const tok1=toks[1]||{text:'is',id:2003};
-  const SYS=820,HIST=3200,USER=toks.length+Math.ceil(input.length/12);
-  const totalIn=SYS+HIST+USER;
+  let SYS=820,HIST=3200;
+  const USER=toks.length+Math.ceil(input.length/12);
+  let totalIn=SYS+HIST+USER;
 
   /* ── S1: TOKENIZATION ── */
   activateStage(1);await sleep(speed*.3);
@@ -892,46 +941,203 @@ async function runPipeline(){
   const outTokEst=Math.ceil(PRESET.response.split(' ').length*1.3);
   const ic=(totalIn/1e6)*m.inP,oc=(outTokEst/1e6)*m.outP,tot=ic+oc;
 
+  /* helper — format cost */
+  const fc=v=>v<0.000001?'< $0.000001':'$'+v.toFixed(6);
 
+  /* ── STORY MODE S8 ── */
   const sc8=document.getElementById('sc-8');
   sc8.innerHTML=`
-    <div class="analogy"><div class="analogy-icon">🍵</div><div class="analogy-text">AI charges per token. <strong>Each token costs a tiny fraction of a cent.</strong> The surprise: <em>your message is the cheapest part</em>. The system prompt is fixed overhead charged on every single call.</div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      ${[['📨','You sent',totalIn+' tokens'],['📩','AI responds',outTokEst+' tokens'],['💵','Input cost','$'+ic.toFixed(6)],['💰','Total this call','$'+tot.toFixed(6),true]].map(([em,lbl,val,hi])=>`
-        <div style="background:${hi?'rgba(255,154,92,.06)':'#111e35'};border:1px solid ${hi?'rgba(255,154,92,.3)':'#1c2d4a'};border-radius:11px;padding:11px 13px;text-align:center">
-          <div style="font-size:1.3rem;margin-bottom:4px">${em}</div>
-          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:${hi?'#ff9a5c':'#dde8f5'}">${val}</div>
-          <div style="font-size:.62rem;opacity:.55;margin-top:2px;text-transform:uppercase;letter-spacing:.8px">${lbl}</div>
-        </div>`).join('')}
-    </div>
-    <div class="fun-fact"><span>💡</span><span>This exchange costs <strong>$${tot.toFixed(6)}</strong>. At 1M daily calls that's <strong>$${(tot*1e6*30).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')} /month</strong>.</span></div>`;
+    <div class="analogy"><div class="analogy-icon">🍵</div><div class="analogy-text">AI charges per token — like paying per word in a telegram. <strong>The surprise? Your message is the cheapest part.</strong> The system prompt is fixed overhead billed on <em>every single call</em> — even if you ask the same question.</div></div>
 
+    <div class="viz-box" style="margin-bottom:10px">
+      <div class="viz-title">Where every token comes from — this call</div>
+
+      <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:.72rem;line-height:1.6;color:var(--amber)">
+        ⚡ <strong>Demo note:</strong> SYS and History are estimates. Drag the sliders to see how they affect cost in reality.
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <span style="font-size:.72rem;font-weight:700;width:130px;flex-shrink:0">⚙️ System prompt</span>
+          <input type="range" min="100" max="4000" value="820" step="50"
+            oninput="SYS=parseInt(this.value);document.getElementById('sys-lbl').textContent=this.value+' tok';renderS8Story();renderTc8&&renderTc8();"
+            style="flex:1;min-width:80px;accent-color:var(--orange)">
+          <span id="sys-lbl" style="font-size:.7rem;font-weight:800;color:var(--orange);width:58px;text-align:right">820 tok</span>
+        </div>
+        <div style="font-size:.62rem;color:var(--text2);margin-bottom:8px;padding-left:138px">Typical range: 200 (minimal) → 4000 (complex)</div>
+
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:.72rem;font-weight:700;width:130px;flex-shrink:0">💬 History turns</span>
+          <input type="range" min="0" max="20" value="4" step="1"
+            oninput="HIST=parseInt(this.value)*800;document.getElementById('hist-lbl').textContent=this.value+' turns ('+HIST+' tok)';renderS8Story();renderTc8&&renderTc8();"
+            style="flex:1;min-width:80px;accent-color:var(--violet)">
+          <span id="hist-lbl" style="font-size:.7rem;font-weight:800;color:var(--violet);width:58px;text-align:right;line-height:1.3">4 turns<br><span style="font-size:.58rem;opacity:.7">3200 tok</span></span>
+        </div>
+        <div style="font-size:.62rem;color:var(--text2);margin-top:3px;padding-left:138px">Each turn ≈ 800 tokens. Watch cost grow as conversation grows.</div>
+      </div>
+
+      <div id="s8-tok-bars"></div>
+      <div style="border-top:1px dashed var(--border);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:center" id="s8-total-line">
+        <span style="font-size:.75rem;font-weight:700;color:var(--text2)">Total input tokens</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.05rem;color:var(--cyan)">${totalIn}</span>
+      </div>
+    </div>
+
+    <div class="viz-box">
+      <div class="viz-title">How the bill is calculated</div>
+      <div class="formula-box" id="s8-formula-story"></div>
+    </div>
+
+    <div class="fun-fact"><span>💡</span><span>This exchange costs <strong>${fc(tot)}</strong>. At 1M daily calls that's <strong>$${(tot*1e6*30).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')} /month</strong> just for this one conversation type.</span></div>
+    <div class="myth" style="margin-top:10px"><span style="font-size:1.1rem;flex-shrink:0">💭</span><div><div class="myth-wrong">My message is what costs money</div><div class="myth-right">✅ The system prompt (your app's instructions to the AI) is charged on every call — often 10× more than your actual message.</div></div></div>`;
+
+  /* ── story bars + sliders ── */
+  function renderS8Story(){
+    const mx=MODELS[selectedModel];
+    const dyn_total=SYS+HIST+USER;
+    const ic2=(dyn_total/1e6)*mx.inP, oc2=(outTokEst/1e6)*mx.outP, tot2=ic2+oc2;
+    const items=[
+      {id:'s8sb-0',label:'⚙️ System prompt',badge:'estimated',badgeCol:'var(--amber)',note:'App instructions — varies per product',tok:SYS,col:'var(--orange)'},
+      {id:'s8sb-1',label:'💬 Conversation history',badge:'simulated · grows each turn',badgeCol:'var(--rose)',note:'Every past message resent from scratch',tok:HIST,col:'var(--violet)'},
+      {id:'s8sb-2',label:'✉️ Your message',badge:'actual',badgeCol:'var(--emerald)',note:`"${input.slice(0,28)}${input.length>28?'…':''}"`,tok:USER,col:'var(--cyan)'},
+    ];
+    const container=document.getElementById('s8-tok-bars');
+    container.innerHTML='';
+    items.forEach((it,i)=>{
+      const pct=((it.tok/dyn_total)*100).toFixed(0);
+      const row=document.createElement('div');
+      row.style.cssText='margin-bottom:10px';
+      row.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:.76rem;font-weight:700">${it.label}
+            <span style="font-size:.55rem;font-weight:800;background:rgba(0,0,0,.3);border:1px solid ${it.badgeCol};color:${it.badgeCol};border-radius:10px;padding:1px 6px;margin-left:5px;text-transform:uppercase;letter-spacing:.5px">${it.badge}</span>
+          </span>
+          <span style="font-size:.72rem;font-weight:800;color:${it.col}">${it.tok} tok</span>
+        </div>
+        <div style="font-size:.63rem;color:var(--text2);margin-bottom:5px">${it.note}</div>
+        <div class="td-bar-bg" style="height:10px"><div class="td-bar-fill" id="${it.id}" style="background:${it.col};width:${pct}%"></div></div>`;
+      container.appendChild(row);
+    });
+    /* total line */
+    const totDiv=document.getElementById('s8-total-line');
+    if(totDiv) totDiv.innerHTML=`<span style="font-size:.75rem;font-weight:700;color:var(--text2)">Total input tokens</span><span style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.05rem;color:var(--cyan)">${dyn_total}</span>`;
+    /* formula */
+    const sb=document.getElementById('s8-formula-story');
+    if(sb) sb.innerHTML=`
+      <div class="f-row"><span class="f-lbl">📥 Input tokens</span><span class="f-val cyan">${dyn_total} tokens</span></div>
+      <div class="f-row"><span class="f-lbl">Rate (${mx.name})</span><span class="f-val">$${mx.inP} per million tokens</span></div>
+      <div class="f-row"><span class="f-lbl">Input cost</span><span class="f-val cyan">${dyn_total} ÷ 1,000,000 × $${mx.inP} = ${fc(ic2)}</span></div>
+      <div class="f-row" style="margin-top:6px"><span class="f-lbl">📤 Output tokens</span><span class="f-val emerald">~${outTokEst} tokens</span></div>
+      <div class="f-row"><span class="f-lbl">Estimated how?</span><span class="f-val" style="font-size:.63rem">Word count × 1.3 (tokens ≈ 0.75 words)</span></div>
+      <div class="f-row"><span class="f-lbl">Output cost</span><span class="f-val emerald">${outTokEst} ÷ 1,000,000 × $${mx.outP} = ${fc(oc2)}</span></div>
+      <div class="f-row f-total"><span class="f-lbl" style="color:var(--violet)">💳 Total this call</span><span class="f-val violet">${fc(ic2)} + ${fc(oc2)} = <strong>${fc(tot2)}</strong></span></div>`;
+  }
+  setTimeout(renderS8Story, 700);
+
+  /* ── TECH MODE S8 ── */
   const tc8=document.getElementById('tc-8');
   tc8.innerHTML=`
-    <div class="t-section"><div class="t-sec-title">Model pricing</div><div class="model-tabs" id="tc8-tabs"></div><div class="econ-grid" id="tc8-econ"></div></div>
-    <div class="t-section scale-sec"><div class="scale-title">📈 Scale Projector</div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:.68rem;opacity:.6">Daily calls:</span><input type="range" min="0" max="5" value="2" oninput="updateTc8Scale(this)" id="tc8-slider" style="flex:1;min-width:100px;accent-color:#00c8f8"><span style="font-size:.73rem;color:#00c8f8;font-weight:700;width:75px;font-family:monospace" id="tc8-scale-lbl">10K/day</span></div><div class="scale-cards" id="tc8-scale-cards"></div></div>
-    <div class="t-section"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:#8b5cf6;margin-bottom:9px">🔬 Token Anatomy</div><div id="tc8-anatomy"></div></div>
-    <div class="receipt">
-      <div class="rr"><span>⚙️ System prompt (${SYS} tok)</span><span class="rv">$${(SYS/1e6*m.inP).toFixed(6)}</span></div>
-      <div class="rr"><span>💬 History (${HIST} tok)</span><span class="rv">$${(HIST/1e6*m.inP).toFixed(6)}</span></div>
-      <div class="rr"><span>✉️ Your message (${USER} tok)</span><span class="rv">$${(USER/1e6*m.inP).toFixed(6)}</span></div>
-      <div class="rr"><span>📝 AI response (~${outTokEst} tok)</span><span class="rv">$${oc.toFixed(6)}</span></div>
-      <div class="rr"><span>TOTAL</span><span class="rv">$${tot.toFixed(6)}</span></div>
+    <div class="t-section">
+      <div class="t-sec-title">Model — select to recalculate</div>
+      <div class="model-tabs" id="tc8-tabs"></div>
+    </div>
+
+    <div class="t-section">
+      <div class="t-sec-title">📥 Input token derivation</div>
+      <table class="tok-deriv-table" id="tc8-input-table">
+        <thead><tr>
+          <th>Component</th><th>Tokens</th><th>Rate ($/Mtok)</th><th>Cost</th><th style="min-width:80px">Share</th>
+        </tr></thead>
+        <tbody id="tc8-input-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="t-section">
+      <div class="t-sec-title">📤 Output token derivation</div>
+      <div class="formula-box" id="tc8-out-deriv"></div>
+    </div>
+
+    <div class="t-section">
+      <div class="t-sec-title">💳 Grand total formula</div>
+      <div class="formula-box" id="tc8-grand"></div>
+    </div>
+
+    <div class="t-section scale-sec">
+      <div class="scale-title">📈 Scale Projector</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:.68rem;color:var(--text2)">Daily calls:</span>
+        <input type="range" min="0" max="5" value="2" oninput="updateTc8Scale(this)" id="tc8-slider" style="flex:1;min-width:100px;accent-color:var(--cyan)">
+        <span style="font-size:.73rem;color:var(--cyan);font-weight:700;width:75px;font-family:monospace" id="tc8-scale-lbl">10K/day</span>
+      </div>
+      <div class="scale-cards" id="tc8-scale-cards"></div>
     </div>`;
+
+  function renderTc8(){
+    const mx=MODELS[selectedModel];
+    /* input table — uses live SYS/HIST */
+    const dynTotal=SYS+HIST+USER;
+    const ix=(dynTotal/1e6)*mx.inP,ox=(outTokEst/1e6)*mx.outP,tx=ix+ox;
+    const rows=[
+      {icon:'⚙️',label:'System prompt',badge:'estimated',badgeCol:'var(--amber)',note:'Varies per app · drag slider in Story Mode',tok:SYS,col:'var(--orange)'},
+      {icon:'💬',label:'Conversation history',badge:'simulated',badgeCol:'var(--rose)',note:'Grows every turn · drag slider in Story Mode',tok:HIST,col:'var(--violet)'},
+      {icon:'✉️',label:'Your message',badge:'actual',badgeCol:'var(--emerald)',note:`"${input.slice(0,20)}${input.length>20?'…':''}"`,tok:USER,col:'var(--cyan)'},
+    ];
+    const tbody=document.getElementById('tc8-input-tbody');
+    tbody.innerHTML='';
+    rows.forEach(r=>{
+      const cost=(r.tok/1e6)*mx.inP;
+      const pct=((r.tok/dynTotal)*100).toFixed(0);
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td>
+          <span style="color:${r.col};font-weight:800">${r.icon} ${r.label}</span>
+          <span style="font-size:.52rem;font-weight:800;border:1px solid ${r.badgeCol};color:${r.badgeCol};border-radius:8px;padding:1px 5px;margin-left:4px;text-transform:uppercase;letter-spacing:.4px">${r.badge}</span>
+          <span class="td-formula">${r.note}</span>
+        </td>
+        <td style="color:${r.col};font-weight:800">${r.tok}</td>
+        <td style="color:var(--text2)">$${mx.inP}</td>
+        <td style="color:${r.col};font-weight:700">${fc(cost)}</td>
+        <td><div class="td-bar-wrap"><div class="td-bar-bg"><div class="td-bar-fill" style="background:${r.col};width:${pct}%"></div></div><span class="td-label" style="color:${r.col}">${pct}%</span></div></td>`;
+      tbody.appendChild(tr);
+    });
+    /* total input row */
+    const trTot=document.createElement('tr');trTot.className='total-row';
+    trTot.innerHTML=`<td style="font-weight:900">Σ Total input</td><td style="color:var(--cyan);font-weight:900">${dynTotal}</td><td></td><td style="color:var(--cyan);font-weight:900">${fc(ix)}</td><td><span style="color:var(--cyan);font-size:.7rem">SYS+HIST+MSG</span></td>`;
+    tbody.appendChild(trTot);
+
+    /* output derivation */
+    const wordCount=PRESET.response.split(' ').length;
+    document.getElementById('tc8-out-deriv').innerHTML=`
+      <div class="f-row"><span class="f-lbl">Preset response words</span><span class="f-val">${wordCount} words</span></div>
+      <div class="f-row"><span class="f-lbl">Token multiplier</span><span class="f-val">× 1.3 (English avg: 1 token ≈ 0.75 words)</span></div>
+      <div class="f-row"><span class="f-lbl">Output token estimate</span><span class="f-val emerald">ceil(${wordCount} × 1.3) = ${outTokEst} tokens</span></div>
+      <div class="f-row"><span class="f-lbl">Output rate (${mx.name})</span><span class="f-val">$${mx.outP} / Mtok (${(mx.outP/mx.inP).toFixed(1)}× more expensive than input)</span></div>
+      <div class="f-row f-total"><span class="f-lbl">Output cost</span><span class="f-val emerald">${outTokEst} ÷ 1,000,000 × $${mx.outP} = <strong>${fc(ox)}</strong></span></div>`;
+
+    /* grand total — uses dynTotal */
+    document.getElementById('tc8-grand').innerHTML=`
+      <div class="f-row"><span class="f-lbl">Input cost</span><span class="f-val cyan">${fc(ix)}</span></div>
+      <div class="f-row"><span class="f-lbl">Output cost</span><span class="f-val emerald">${fc(ox)}</span></div>
+      <div class="f-row f-total"><span class="f-lbl" style="color:var(--violet)">Total = in + out</span><span class="f-val violet">${fc(ix)} + ${fc(ox)} = <strong>${fc(tx)}</strong></span></div>
+      <div class="f-row" style="margin-top:4px;font-size:.62rem"><span class="f-lbl" style="color:var(--muted)">Cost per token (blended)</span><span class="f-val" style="color:var(--muted);font-size:.62rem">$${((ix+ox)/(dynTotal+outTokEst)*1e6).toFixed(4)} / Mtok</span></div>`;
+  }
+
   MODELS.forEach((mod,i)=>{
     const t=document.createElement('button');t.className='mtab'+(i===selectedModel?' active':'');t.textContent=mod.name;
-    t.onclick=()=>{selectedModel=i;document.querySelectorAll('#tc8-tabs .mtab').forEach((b,j)=>b.classList.toggle('active',j===i));renderTc8Econ();};
+    t.onclick=()=>{
+      selectedModel=i;
+      document.querySelectorAll('#tc8-tabs .mtab').forEach((b,j)=>b.classList.toggle('active',j===i));
+      renderTc8();
+      updateTc8ScaleFromSlider();
+    };
     document.getElementById('tc8-tabs').appendChild(t);
   });
-  function renderTc8Econ(){
-    const mx=MODELS[selectedModel];
-    const ix=(totalIn/1e6)*mx.inP,ox=(outTokEst/1e6)*mx.outP,tx=ix+ox;
-    document.getElementById('tc8-econ').innerHTML=`
-      <div class="econ-card"><div class="econ-title">Input cost</div><div class="econ-formula">${totalIn} tok × $${mx.inP}/Mtok</div><div class="econ-val">$${ix.toFixed(6)}</div></div>
-      <div class="econ-card"><div class="econ-title">Output cost</div><div class="econ-formula">${outTokEst} tok × $${mx.outP}/Mtok</div><div class="econ-val">$${ox.toFixed(6)}</div></div>
-      <div class="econ-card hi"><div class="econ-title">Total</div><div class="econ-formula">input + output</div><div class="econ-val g">$${tx.toFixed(6)}</div></div>`;
+  renderTc8();
+
+  function updateTc8ScaleFromSlider(){
+    const el=document.getElementById('tc8-slider');
+    if(el) window.updateTc8Scale(el);
   }
-  renderTc8Econ();
   window.updateTc8Scale=function(el){
     const idx=parseInt(el.value);
     document.getElementById('tc8-scale-lbl').textContent=SCALE_LABS[idx];
@@ -941,8 +1147,7 @@ async function runPipeline(){
       return`<div class="sc-mini"><div class="sc-val">${f}</div><div class="sc-lbl">${l}</div></div>`;
     }).join('');
   };
-  window.updateTc8Scale(document.getElementById('tc8-slider'));
-  buildAnatomy('tc8-anatomy',totalIn,SYS,USER,HIST);
+  updateTc8ScaleFromSlider();
   await sleep(speed*.4);doneStage(8);
 
   /* ── S9: OUTPUT — PREVIEW MODE ── */
